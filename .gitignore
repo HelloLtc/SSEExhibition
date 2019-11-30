@@ -1,5 +1,24 @@
 # == Customize ignore == #
 /**/*secretConfig*.*
+testfolder/
+
+
+# == Clusion ignore == #
+android/
+salt/
+
+.metadata
+bin/
+tmp/
+*.tmp
+
+log*
+temp-logs.txt
+words-logs.txt
+
+test.db
+data.txt
+output.txt
 
 # Created by https://www.gitignore.io/api/vim,node,java,linux,macos,python,pycharm,eclipse,intellij,webstorm,phpstorm,jetbrains,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=vim,node,java,linux,macos,python,pycharm,eclipse,intellij,webstorm,phpstorm,jetbrains,visualstudiocode

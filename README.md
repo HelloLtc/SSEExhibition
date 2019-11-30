@@ -17,48 +17,84 @@ This repo show the functions of some SSE schemes.
 
 - FrontEnd
 - BackEnd
-  - MySQL version: TODO
+  - Java version: 8(1.8)
+  - MySQL version: 8.0.1+
   - Tomcat version: TODO
   - Servlet
-  - Java version: 10+
   - Java-Maven
 
 ## File Structure
 
-For security
+For security:
+
 .gitignore 添加如下代码, 忽略含有`secretConfig`关键字的文件:
 
 ```shell
 /**/*secretConfig*.*
 ```
 
-大部分结构由 IDEA 自动生成;
+大部分结构由 `IDEA` 自动生成;
 
-```JavaScript
-/
-|-lib
-|-SQL
-|-src/
-  |- main/
-    |-java/
-      |-Utils/
-        |-DB/                   //  sql manipulate
-        |-CryptoPrimitives.java //  密码原语(常见函数)
-      |-Schemes*N
-    |-resources/
-      |-secretConfig.properties // 私密内容, 如数据库账号密码,相关地址; ATTENTION: gitignore应该添加
-      |-config.properties   // 常用配置如path等.
-  |- test/java
-    |-Schemes*N
-|-target     //  已编译文件
-|-web/       //  前端部分
-  |-files/   //  文件上传/下载暂存区;名字可根据path.properties设置
-  |-assets/  //  web资源文件
-  |-WEB-INF/
-    |-web.xml//  route configure
-|-pom.xml    //  maven config
-|-docs       //  文档
-|-README.md  //  project introduction
+```javascript
+SSEExhibition/
+├── README.md                                       //  project introduction
+├── android/                                        //  removed(we do not use android codes in clusion)
+├── SQL/                                            //  database init,update.etc
+├── lib                                             //  3rd party jars
+│   ├── lucene-analyzers-common-8.2.0.jar
+│   └── lucene-core-8.2.0.jar
+├── src
+│   ├── main
+│   │   ├── resources                               //  customize properties
+│   │   │   ├── config.properties                   //  Normal configuration like path,SQL.etc
+│   │   │   └── secretConfig.properties             //  password or more
+│   │   └── java
+│   │      └── org
+│   │           ├── crypto                          //  clusion origin codes
+│   │           │   └── sse
+│   │           │       ├── CryptoPrimitives.java   //  Crypto Usual functions
+│   │           │       └── *.java
+│   │           └── ruiyun                          //  ruiyun.lab functions
+│   │               ├── crypto
+│   │               │   └── Util                    //  Some reuse functions
+│   │               │       └── DB.etc
+│   │               └── Schemes*N
+│   │                   └── *.java                  //  customize code
+│   └── test
+│       └── java
+│           └── org
+│               ├── crypto                          //  clusion origin tests
+│               │   └── sse
+│               │       └── Test*.java              //  auto
+│               └── ruiyun                          //  customize test
+│                   └── Schemes*N
+│                       └── Test*.java
+├── web                                             //  Front-End Codes
+│   ├── assets                                      //  Art and logic
+│   ├── WEB-INF
+│   │  └── web.xml                                  //  configure like route.etc
+│   └── testfolder                                  //  Because of the `war` package
+├── target/                                         //  IDEA auto generated
+├── docs/                                           //  documents maybe latter config
+├── testfolder/                                     //  Clusion test: test folder for encrypt/decrypt
+├── salt/                                           //  Clusion generated: salt
+├── test.db                                         //  Clusion generated: db file
+├── logs.txt                                        //  Clusion generated: running log
+├── SSEExhibition.iml
+└── pom.xml                                         //  maven config
 ```
 
-Ref: [Clusion](https://github.com/encryptedsystems/Clusion)
+## Privacy
+
+关于隐私相关的配置, 均带上`secretConfig`文件名(具体请查看`.gitignore`配置), commit 和 push 之前用
+`git status`查看已上传的内容.
+
+## Copyright
+
+This repo refer repo [Clusion](https://github.com/encryptedsystems/Clusion).
+
+**Initial commit codes all from `org.Clusion.sse`**, for development, we changed the package name.
+
+We do not consider this repo to `release` to public users or `commercial` usage.
+
+And this may change in late future.
