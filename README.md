@@ -8,7 +8,8 @@ This repo show the functions of some SSE schemes.
 2. search: single/multiple;
 3. download: 搜到的文件进行解密,下载;
 4. 支持多 scheme, 在使用之前进行选择;
-5. 加密算法改`国密`.
+5. 加密算法改`国密`;
+6. 加密去重算法.
 
 ## Tech Stack
 
