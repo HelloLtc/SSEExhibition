@@ -2,12 +2,6 @@
 /**/*secretConfig*.*
 testfolder/
 
-# == git keep == #
-lib/
-!lib/lucene-core-8.2.0.jar
-!lib/lucene-queryparser-8.2.0.jar
-!lib/lucene-analyzers-common-8.2.0.jar
-
 # == Clusion ignore == #
 android/
 salt/
