@@ -2,6 +2,8 @@
 
 This repo show the functions of some SSE schemes.
 
+use `.editorconfig` to create same code style.
+
 ## Functions
 
 1. setup: 文件上传,加密,写 sql(放 indices);
