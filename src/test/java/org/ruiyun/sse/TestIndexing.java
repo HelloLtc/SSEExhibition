@@ -9,7 +9,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -27,14 +27,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public class TestIndexing {
-  /**
-   *
-   *
-   * @param args
-   * @throws Exception
-   */
-	public static void main(String[] args) throws Exception {
 
+	public static void main(String[] args) throws Exception {
+		
 		Printer.addPrinter(new Printer(Printer.LEVEL.EXTRA));
 
 		BufferedReader keyRead = new BufferedReader(new InputStreamReader(System.in));
