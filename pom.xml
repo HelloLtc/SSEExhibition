@@ -29,7 +29,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.ruiyun.sse.IEX2LevAMAZON</mainClass>
+                            <mainClass>org.crypto.sse.IEX2LevAMAZON</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
