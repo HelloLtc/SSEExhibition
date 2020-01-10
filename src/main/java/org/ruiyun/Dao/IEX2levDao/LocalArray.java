@@ -6,7 +6,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import org.ruiyun.Util.IEX2levDB;
-/**对数据库IEX2lev中LocalArrayIndex表和LocalArrayList表进行增删改查的功能，
+
+/**
+ * 对数据库IEX2lev中LocalArrayIndex表和LocalArrayList表进行增删改查的功能，
  * LocalArrayIndex表存储（关键字一，关键字二，包含关键字一，二的文件名/指向LocalArrayList的索引）
  * LocalArrayList表存储（索 引，包含关键字的文件名/指向LocalArrayList的索引）
  * @author ltc

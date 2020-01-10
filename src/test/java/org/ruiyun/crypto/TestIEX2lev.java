@@ -93,7 +93,7 @@ public class TestIEX2lev {
 		Printer.debugln("\nTotal Time elapsed for the entire construction in seconds: " + totalTime2 / 1000000000);
 		writer.write("\n Total Time elapsed for the entire construction in seconds: " + totalTime2 / 1000000000);
 
-//		Printer.debugln("\nRelative Time elapsed per (w, Id) in ns: " + totalTime2 / TextExtractPar.lp1.size());
+//	  Printer.debugln("\nRelative Time elapsed per (w, Id) in ns: " + totalTime2 / TextExtractPar.lp1.size());
 //		writer.write("\n Relative Time elapsed per (w, Id) in ns: " + totalTime2 / TextExtractPar.lp1.size());
 
   // The two commented commands are used to compute the size of the

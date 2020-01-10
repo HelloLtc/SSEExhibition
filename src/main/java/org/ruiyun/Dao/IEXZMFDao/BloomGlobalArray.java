@@ -1,31 +1,32 @@
-package org.ruiyun.Dao.IEX2levDao;
+package org.ruiyun.Dao.IEXZMFDao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.ruiyun.Util.IEX2levDB;
+import org.ruiyun.Util.IEXZMFDB;
 
 /**
- * 对数据库IEX2lev中GlobalArrayIndex表和GlobalArrayList表进行增删改查的功能，
- * GlobalArrayIndex表存储（关键字，包含关键字的文件名/指向GlobalArrayList的索引）
- * GlobalArrayList表存储（索 引，包含关键字的文件名/指向GlobalArrayList的索引）
+ * 对数据库IEXZMF中BloomGlobalArrayIndex表和BloomGlobalArrayList表进行增删改查的功能，
+ * BloomGlobalArrayIndex表存储（关键字，包含关键字的文件名/索引）
+ * BloomGlobalArrayList表存储（索引（唯一标识），包含关键字的文件名/索引）
+ * 其中索引是指向BloomGlobalArrayList
  * @author ltc
- * @className GlobalArray
- * @since 2020/1/9 21:06
+ * @className BloomGlobalArray
+ * @since 2020/1/10 19:47
  */
-public class GlobalArray {
+public class BloomGlobalArray {
 
   /**
-   * 在GlobalArrayIndex表中插入一条数据
+   *在BloomGlobalArrayIndex表中插入一条记录
    * @param keyword 关键字
-   * @param listarrayindex 包含关键字的文件/索引（索引指向GlobalArrayList）
+   * @param listarrayindex 包含关键字的文件名/索引
    * @throws Exception
    */
   public static void InsertGlobalArrayIndex(String keyword,byte[] listarrayindex) throws Exception {
     Connection conn = null;
     PreparedStatement ps = null;
     try {
-      conn =  IEX2levDB.getConnection();
+      conn =  IEXZMFDB.getConnection();
       conn.setAutoCommit(false);
       ps = conn
         .prepareStatement("INSERT INTO GlobalArrayIndex (GlobalKeyword,GlobalListArrayIndex) values(?,?)");
@@ -44,16 +45,15 @@ public class GlobalArray {
   }
 
   /**
-   * 根据关键字删除GlobalArrayIndex表中的一条记录
+   * 根据keyword删除GlobalArrayIndex中的一条记录
    * @param keyword 关键字
    * @throws Exception
    */
   public static void deleteGlobalArrayIndex(String keyword) throws Exception {
     Connection conn = null;
     PreparedStatement ps = null;
-
     try {
-      conn = IEX2levDB.getConnection();
+      conn = IEXZMFDB.getConnection();
       ps = conn
         .prepareStatement("DELETE FROM GlobalArrayIndex WHERE GlobalKeyword = ?");
       ps.setString(1, keyword);
@@ -67,9 +67,9 @@ public class GlobalArray {
   }
 
   /**
-   * 根据关键字找到包含关键字的文件名称/指向GlobalArrayIndex的索引
+   * 根据keyword查找GlobalArrayIndex表中包含关键字的文件名/索引
    * @param keyword 关键字
-   * @return 包含关键字的文件名称/指向GlobalArrayIndex的索引
+   * @return 包含关键字的文件名/索引
    * @throws SQLException
    */
   public static byte[] FindGlobalListArrayIndex(String keyword) throws SQLException{
@@ -78,7 +78,7 @@ public class GlobalArray {
     ResultSet rs = null;
     byte  temp[] = null;
     try {
-      con = IEX2levDB.getConnection();
+      con = IEXZMFDB.getConnection();
       ps = con.prepareStatement("SELECT GlobalListArrayIndex FROM GlobalArrayIndex WHERE GlobalKeyword=?");
       ps.setString(1, keyword);
       rs = ps.executeQuery();
@@ -96,20 +96,21 @@ public class GlobalArray {
   }
 
   /**
-   * 在GlobalArrayList表中插入一条数据
-   * (由于主键GlobalCounter在数据库中自动递增，所以SQL不用添加GlobalCounter)
-   * @param templist 包含关键字的文件/索引串（GlobalCounter为单个索引）
+   * 在GlobalArrayList中插入一条记录
+   * @param counter 索引（唯一标识）
+   * @param templist 包含关键字的文件名/索引
    * @throws Exception
    */
-  public static void InsertGlobalArrayList(byte[] templist) throws Exception {
+  public static void InsertGlobalArrayList(int counter,byte[] templist) throws Exception {
     Connection conn = null;
     PreparedStatement ps = null;
     try {
-      conn = IEX2levDB.getConnection();
+      conn = IEXZMFDB.getConnection();
       conn.setAutoCommit(false);
       ps = conn
-        .prepareStatement("INSERT INTO GlobalArrayList (GlobalTempList) values(?)");
-      ps.setBytes(1, templist);
+        .prepareStatement("INSERT INTO GlobalArrayList (GlobalCounter,GlobalTempList) values(?,?)");
+      ps.setInt(1, counter);
+      ps.setBytes(2, templist);
       ps.executeUpdate();
       conn.commit();
     } catch (Exception es) {
@@ -123,46 +124,15 @@ public class GlobalArray {
   }
 
   /**
-   * 根据GlobalTempList查找其标识GlobalCounter
-   * @param GlobalTempList 包含关键字文件名/索引
-   * @return 包含GlobalTempList的标识GlobalCounter
-   * @throws Exception
-   */
-  public static int FindGlobalArrayList(byte[] GlobalTempList) throws Exception {
-    Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    int temp = -1;
-    try {
-      conn = IEX2levDB.getConnection();
-      conn.setAutoCommit(false);
-      ps = conn
-        .prepareStatement("SELECT GlobalCounter FROM GlobalArrayList WHERE GlobalTempList=?");
-      ps.setBytes(1, GlobalTempList);
-      rs = ps.executeQuery();
-      rs.next();
-      temp = rs.getInt("GlobalCounter");
-    } catch (Exception es) {
-      conn.rollback();
-      throw es;
-    } finally {
-      conn.setAutoCommit(true);
-      ps.close();
-      conn.close();
-    }
-    return temp;
-  }
-
-  /**
-   * 根据主键GlobalCounter删除GlobalArrayList表中的一条记录
-   * @param GlobalCounter GlobalArrayList表的主键GlobalCounter
+   * 根据索引（唯一标识）删除一条记录
+   * @param GlobalCounter 索引（唯一标识）
    * @throws Exception
    */
   public static void deleteGlobalArrayList(int GlobalCounter) throws Exception {
     Connection conn = null;
     PreparedStatement ps = null;
     try {
-      conn = IEX2levDB.getConnection();
+      conn = IEXZMFDB.getConnection();
       ps = conn
         .prepareStatement("DELETE FROM GlobalArrayList WHERE GlobalCounter = ?");
       ps.setInt(1, GlobalCounter);
@@ -176,9 +146,9 @@ public class GlobalArray {
   }
 
   /**
-   * 根据主键GlobalCounter查找GlobalArrayList表中的GlobalTempList（包含关键字的文件名/索引）
-   * @param GlobalCounter GlobalArrayList表中的主键GlobalCounter
-   * @return GlobalTempList（包含关键字的文件名/索引）
+   * 根据索引（唯一标识）查找包含关键字的文件名/索引
+   * @param GlobalCounter 索引（唯一标识）
+   * @return 包含关键字的文件名/索引
    * @throws SQLException
    */
   public static byte[] findGlobalListArrayList(int GlobalCounter) throws SQLException{
@@ -187,11 +157,11 @@ public class GlobalArray {
     ResultSet rs = null;
     byte  temp[] = null;
     try {
-      con = IEX2levDB.getConnection();
+      con = IEXZMFDB.getConnection();
       ps = con.prepareStatement("SELECT GlobalTempList FROM GlobalArrayList WHERE GlobalCounter=?");
       ps.setInt(1, GlobalCounter);
       rs = ps.executeQuery();
-      //rs.next();
+      rs.next();
       if(!rs.next())
         return null;
       temp = rs.getBytes("GlobalTempList");
@@ -206,7 +176,7 @@ public class GlobalArray {
   }
 
   /**
-   * 清空GlobalArrayIndex表的信息
+   * 清空GlobalArrayIndex表的数据
    * @throws Exception
    */
   public static void TruncateGlobalArrayIndex() throws Exception {
@@ -214,9 +184,9 @@ public class GlobalArray {
     PreparedStatement ps = null;
 
     try {
-      conn = IEX2levDB.getConnection();
+      conn = IEXZMFDB.getConnection();
       ps = conn
-        .prepareStatement(" truncate  table globalarrayindex");
+        .prepareStatement("truncate  table globalarrayindex");
       ps.executeUpdate();
     } catch (Exception es) {
       throw es;
@@ -227,7 +197,7 @@ public class GlobalArray {
   }
 
   /**
-   * 清空GlobalArrayList表的信息
+   * 清空GlobalArrayList表的数据
    * @throws Exception
    */
   public static void TruncateGlobalArrayList() throws Exception {
@@ -235,9 +205,9 @@ public class GlobalArray {
     PreparedStatement ps = null;
 
     try {
-      conn = IEX2levDB.getConnection();
+      conn = IEXZMFDB.getConnection();
       ps = conn
-        .prepareStatement("truncate  table globalarraylist");
+        .prepareStatement("truncate  table GlobalArrayList");
       ps.executeUpdate();
     } catch (Exception es) {
       throw es;
@@ -246,5 +216,4 @@ public class GlobalArray {
       conn.close();
     }
   }
-
 }
