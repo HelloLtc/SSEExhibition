@@ -38,12 +38,13 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.pdfbox.cos.COSDocument;
+import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.apache.pdfbox.io.RandomAccessRead;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
-//import org.apache.pdfbox.util.PDFTextStripper;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.hwpf.extractor.WordExtractor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -64,342 +65,344 @@ import java.util.concurrent.*;
 
 public class TextExtractPar implements Serializable {
 
-	public static int lengthStrings = 0;
-	public static int totalNumberKeywords = 0;
-	public static int maxTupleSize = 0;
-	public static int threshold = 100;
-
-	// lookup1 stores a plaintext inverted index of the dataset, i.e., the
-	// association between the keyword and documents that contain the keyword
-
-	Multimap<String, String> lookup1 = ArrayListMultimap.create();
-	public static Multimap<String, String> lp1 = ArrayListMultimap.create();
-
-	// lookup2 stores the document identifier (title) and the keywords contained
-	// in this document
-
-	Multimap<String, String> lookup2 = ArrayListMultimap.create();
-	public static Multimap<String, String> lp2 = ArrayListMultimap.create();
-
-	static int counter = 0;
-
-	public TextExtractPar(Multimap<String, String> lookup, Multimap<String, String> lookup2) {
-		this.lookup1 = lookup;
-		this.lookup2 = lookup2;
-	}
-
-	public Multimap<String, String> getL1() {
-		return this.lookup1;
-	}
-
-	public Multimap<String, String> getL2() {
-		return this.lookup2;
-	}
-
-	public static void extractTextPar(ArrayList<File> listOfFile)
-			throws InterruptedException, ExecutionException, IOException {
-
-		int threads = 0;
-		if (Runtime.getRuntime().availableProcessors() > listOfFile.size()) {
-			threads = listOfFile.size();
-		} else {
-			threads = Runtime.getRuntime().availableProcessors();
-		}
+  public static int lengthStrings = 0;
+  public static int totalNumberKeywords = 0;
+  public static int maxTupleSize = 0;
+  public static int threshold = 100;
+
+  // lookup1 stores a plaintext inverted index of the dataset, i.e., the
+  // association between the keyword and documents that contain the keyword
+
+  Multimap<String, String> lookup1 = ArrayListMultimap.create();
+  public static Multimap<String, String> lp1 = ArrayListMultimap.create();//
+
+  // lookup2 stores the document identifier (title) and the keywords contained
+  // in this document
+
+  Multimap<String, String> lookup2 = ArrayListMultimap.create();
+  public static Multimap<String, String> lp2 = ArrayListMultimap.create();//
+
+  static int counter = 0;
+
+  public TextExtractPar(Multimap<String, String> lookup, Multimap<String, String> lookup2) {
+    this.lookup1 = lookup;
+    this.lookup2 = lookup2;
+  }
+
+  public Multimap<String, String> getL1() {
+    return this.lookup1;
+  }
+
+  public Multimap<String, String> getL2() {
+    return this.lookup2;
+  }
+
+  public static void extractTextPar(ArrayList<File> listOfFile)
+    throws InterruptedException, ExecutionException, IOException {
+
+    int threads = 0;
+    if (Runtime.getRuntime().availableProcessors() > listOfFile.size()) {
+      threads = listOfFile.size();
+    } else {
+      threads = Runtime.getRuntime().availableProcessors();//返回可用处理器的Java虚拟机的数量
+    }
 
-		ExecutorService service = Executors.newFixedThreadPool(threads);
-		ArrayList<File[]> inputs = new ArrayList<File[]>(threads);
+    ExecutorService service = Executors.newFixedThreadPool(threads);
+    ArrayList<File[]> inputs = new ArrayList<File[]>(threads);
 
-		Printer.extraln("Number of Threads " + threads);
+    Printer.extraln("Number of Threads " + threads);
 
-		for (int i = 0; i < threads; i++) {
-			File[] tmp;
-			if (i == threads - 1) {
-				tmp = new File[listOfFile.size() / threads + listOfFile.size() % threads];
-				for (int j = 0; j < listOfFile.size() / threads + listOfFile.size() % threads; j++) {
-					tmp[j] = listOfFile.get((listOfFile.size() / threads) * i + j);
-				}
-			} else {
-				tmp = new File[listOfFile.size() / threads];
-				for (int j = 0; j < listOfFile.size() / threads; j++) {
-
-					tmp[j] = listOfFile.get((listOfFile.size() / threads) * i + j);
-				}
-			}
-			inputs.add(i, tmp);
-		}
+    for (int i = 0; i < threads; i++) {//根据能够处理java虚拟机的数量对文件进行分割
+      File[] tmp;
+      if (i == threads - 1) {
+        tmp = new File[listOfFile.size() / threads + listOfFile.size() % threads];
+        for (int j = 0; j < listOfFile.size() / threads + listOfFile.size() % threads; j++) {
+          tmp[j] = listOfFile.get((listOfFile.size() / threads) * i + j);
+        }
+      } else {
+        tmp = new File[listOfFile.size() / threads];
+        for (int j = 0; j < listOfFile.size() / threads; j++) {
+
+          tmp[j] = listOfFile.get((listOfFile.size() / threads) * i + j);
+        }
+      }
+      inputs.add(i, tmp);
+    }
 
-		List<Future<TextExtractPar>> futures = new ArrayList<Future<TextExtractPar>>();
-		for (final File[] input : inputs) {
-			Callable<TextExtractPar> callable = new Callable<TextExtractPar>() {
-				public TextExtractPar call() throws Exception {
-					TextExtractPar output = extractOneDoc(input);
+    List<Future<TextExtractPar>> futures = new ArrayList<Future<TextExtractPar>>();
+    for (final File[] input : inputs) {
+      Callable<TextExtractPar> callable = new Callable<TextExtractPar>() {
+        public TextExtractPar call() throws Exception {
+          TextExtractPar output = extractOneDoc(input);//extractOneDoc对文件内的信息进行读取并赋值给look1,look2
 
-					return output;
-				}
-			};
-			futures.add(service.submit(callable));
-		}
+          return output;
+        }
+      };
+      futures.add(service.submit(callable));
+    }
 
-		service.shutdown();
+    service.shutdown();
 
-		for (Future<TextExtractPar> future : futures) {
-			Set<String> keywordSet1 = future.get().getL1().keySet();
-			Set<String> keywordSet2 = future.get().getL2().keySet();
-
-			for (String key : keywordSet1) {
-				lp1.putAll(key, future.get().getL1().get(key));
-				if (lp1.get(key).size()>maxTupleSize){
-					maxTupleSize= lp1.get(key).size();
-				}
-			}
-			for (String key : keywordSet2) {
-				lp2.putAll(key, future.get().getL2().get(key));
-			}
-		}
+    for (Future<TextExtractPar> future : futures) {
+      Set<String> keywordSet1 = future.get().getL1().keySet();
+      Set<String> keywordSet2 = future.get().getL2().keySet();
+
+      for (String key : keywordSet1) {
+        lp1.putAll(key, future.get().getL1().get(key));
+        if (lp1.get(key).size()>maxTupleSize){
+          maxTupleSize= lp1.get(key).size();//所有关键词中出现在所有文件中次数最多的关键词的次数值（ZMF中会使用）
+        }
+      }
+      for (String key : keywordSet2) {
+        lp2.putAll(key, future.get().getL2().get(key));
+      }
+    }
 
-	}
+  }
 
-	private static TextExtractPar extractOneDoc(File[] listOfFile) throws FileNotFoundException {
+  private static TextExtractPar extractOneDoc(File[] listOfFile) throws FileNotFoundException {
 
-		Multimap<String, String> lookup1 = ArrayListMultimap.create();
-		Multimap<String, String> lookup2 = ArrayListMultimap.create();
+    Multimap<String, String> lookup1 = ArrayListMultimap.create();
+    Multimap<String, String> lookup2 = ArrayListMultimap.create();
 
-		for (File file : listOfFile) {
+    for (File file : listOfFile) {
 
-			for (int j = 0; j < 100; j++) {
+      for (int j = 0; j < 100; j++) {
 
-				if (counter == (int) ((j + 1) * listOfFile.length / 100)) {
-					Printer.extraln("Number of files read equals " + j + " %");
-					break;
-				}
-			}
+        if (counter == (int) ((j + 1) * listOfFile.length / 100)) {
+          Printer.extraln("Number of files read equals " + j + " %");
+          break;
+        }
+      }
 
-			List<String> lines = new ArrayList<String>();
-			counter++;
-			FileInputStream fis = new FileInputStream(file);
+      List<String> lines = new ArrayList<String>();
+      counter++;
+      FileInputStream fis = new FileInputStream(file);
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			///////////////////// .docx /////////////////////////////
+      ///////////////////// .docx /////////////////////////////
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			if (file.getName().endsWith(".docx")) {
-				XWPFDocument doc;
-				try {
+      if (file.getName().endsWith(".docx")) {
+        XWPFDocument doc;
+        try {
 
-					doc = new XWPFDocument(fis);
-					XWPFWordExtractor ex = new XWPFWordExtractor(doc);
-					lines.add(ex.getText());
-					ex.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					Printer.debugln("File not read: " + file.getName());
-				}
+          doc = new XWPFDocument(fis);
+          XWPFWordExtractor ex = new XWPFWordExtractor(doc);
+          lines.add(ex.getText());
+          ex.close();
+        } catch (IOException e) {
+          // TODO Auto-generated catch block
+          Printer.debugln("File not read: " + file.getName());
+        }
 
-			}
+      }
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			///////////////////// .pptx /////////////////////////////
+      ///////////////////// .pptx /////////////////////////////
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			else if (file.getName().endsWith(".pptx")) {
+      else if (file.getName().endsWith(".pptx")) {
 
-				OPCPackage ppt;
-				try {
+        OPCPackage ppt;
+        try {
 
-					ppt = OPCPackage.open(fis);
-					XSLFPowerPointExtractor xw = new XSLFPowerPointExtractor(ppt);
-					lines.add(xw.getText());
-					xw.close();
-				} catch (XmlException e) {
-					// TODO Auto-generated catch block
-					Printer.debugln("File not read: " + file.getName());
-				} catch (IOException e) {
-					// TODO Auto-generated catch blPrinter.extraout.println("File not read: " + file.getName());
-				} catch (OpenXML4JException e) {
-					Printer.debugln("File not read: " + file.getName());
-				}
+          ppt = OPCPackage.open(fis);
+          XSLFPowerPointExtractor xw = new XSLFPowerPointExtractor(ppt);
+          lines.add(xw.getText());
+          xw.close();
+        } catch (XmlException e) {
+          // TODO Auto-generated catch block
+          Printer.debugln("File not read: " + file.getName());
+        } catch (IOException e) {
+          // TODO Auto-generated catch blPrinter.extraout.println("File not read: " + file.getName());
+        } catch (OpenXML4JException e) {
+          Printer.debugln("File not read: " + file.getName());
+        }
 
-			}
+      }
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			///////////////////// .xlsx /////////////////////////////
+      ///////////////////// .xlsx /////////////////////////////
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			else if (file.getName().endsWith(".xlsx")) {
+      else if (file.getName().endsWith(".xlsx")) {
 
-				OPCPackage xls;
-				try {
+        OPCPackage xls;
+        try {
 
-					xls = OPCPackage.open(fis);
-					XSSFExcelExtractor xe = new XSSFExcelExtractor(xls);
-					lines.add(xe.getText());
-					xe.close();
-				} catch (InvalidFormatException e) {
-					// TODO Auto-generated catch block
-					Printer.debugln("File not read: " + file.getName());
-				} catch (IOException e) {
-					Printer.debugln("File not read: " + file.getName());
+          xls = OPCPackage.open(fis);
+          XSSFExcelExtractor xe = new XSSFExcelExtractor(xls);
+          lines.add(xe.getText());
+          xe.close();
+        } catch (InvalidFormatException e) {
+          // TODO Auto-generated catch block
+          Printer.debugln("File not read: " + file.getName());
+        } catch (IOException e) {
+          Printer.debugln("File not read: " + file.getName());
 
-				} catch (XmlException e) {
-					// TODO Auto-generated catch block
-					Printer.debugln("File not read: " + file.getName());
-				} catch (OpenXML4JException e) {
-					Printer.debugln("File not read: " + file.getName());
-				}
+        } catch (XmlException e) {
+          // TODO Auto-generated catch block
+          Printer.debugln("File not read: " + file.getName());
+        } catch (OpenXML4JException e) {
+          Printer.debugln("File not read: " + file.getName());
+        }
 
-			}
+      }
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			///////////////////// .doc /////////////////////////////
+      ///////////////////// .doc /////////////////////////////
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			else if (file.getName().endsWith(".doc")) {
+      else if (file.getName().endsWith(".doc")) {
 
-				NPOIFSFileSystem fs;
-				try {
+        NPOIFSFileSystem fs;
+        try {
 
-					fs = new NPOIFSFileSystem(file);
-					WordExtractor extractor = new WordExtractor(fs.getRoot());
-					for (String rawText : extractor.getParagraphText()) {
-						lines.add(extractor.stripFields(rawText));
-					}
+          fs = new NPOIFSFileSystem(file);
+          WordExtractor extractor = new WordExtractor(fs.getRoot());
+          for (String rawText : extractor.getParagraphText()) {
+            lines.add(extractor.stripFields(rawText));
+          }
 
-					extractor.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					Printer.debugln("File not read: " + file.getName());
-				}
+          extractor.close();
+        } catch (IOException e) {
+          // TODO Auto-generated catch block
+          Printer.debugln("File not read: " + file.getName());
+        }
 
-			}
+      }
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			///////////////////// .pdf /////////////////////////////
+      ///////////////////// .pdf /////////////////////////////
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			else if (file.getName().endsWith(".pdf")) {
+      else if (file.getName().endsWith(".pdf")) {
 
-				PDFParser parser;
-				try {
 
-					parser = new PDFParser((RandomAccessRead) fis);
-					parser.parse();
-					COSDocument cd = parser.getDocument();
-					PDFTextStripper stripper = new PDFTextStripper();
-					lines.add(stripper.getText(new PDDocument(cd)));
+        try {
+          PDFParser parser;
+          RandomAccessRead randomAccessRead = new RandomAccessBufferedFileInputStream(file);
+          parser = new PDFParser(randomAccessRead);
+          parser.parse();
+          COSDocument cd = parser.getDocument();
+          PDFTextStripper stripper = new PDFTextStripper();
+          lines.add(stripper.getText(new PDDocument(cd)));
 
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					Printer.debugln("File not read: " + file.getName());
-				}
+          cd.close();
+          randomAccessRead.close();
+        } catch (IOException e) {
+          // TODO Auto-generated catch block
+          Printer.debugln("File not read: " + file.getName());
+        }
 
-			}
+      }
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			///////////////////// Media Files such as gif, jpeg, .wmv, .mpeg,
-			///////////////////// .mp4 /////////////////////////////
+      ///////////////////// Media Files such as gif, jpeg, .wmv, .mpeg,
+      ///////////////////// .mp4 /////////////////////////////
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			else if (file.getName().endsWith(".gif") && file.getName().endsWith(".jpeg")
-					&& file.getName().endsWith(".wmv") && file.getName().endsWith(".mpeg")
-					&& file.getName().endsWith(".mp4")) {
+      else if (file.getName().endsWith(".gif") && file.getName().endsWith(".jpeg")
+        && file.getName().endsWith(".wmv") && file.getName().endsWith(".mpeg")
+        && file.getName().endsWith(".mp4")) {
 
-				lines.add(file.getName());
+        lines.add(file.getName());
 
-			}
+      }
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			///////////////////// raw text extensions
-			///////////////////// /////////////////////////////
+      ///////////////////// raw text extensions
+      ///////////////////// /////////////////////////////
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			else {
-				try {
+      else {
+        try {
 
-					lines = Files.readLines(file, Charsets.UTF_8);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					Printer.debugln("File not read: " + file.getName());
-				} finally {
-					try {
-						fis.close();
-					} catch (IOException ioex) {
-						// omitted.
-					}
-				}
-			}
+          lines = Files.readLines(file, Charsets.UTF_8);
+        } catch (IOException e) {
+          // TODO Auto-generated catch block
+          Printer.debugln("File not read: " + file.getName());
+        } finally {
+          try {
+            fis.close();
+          } catch (IOException ioex) {
+            // omitted.
+          }
+        }
+      }
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			///////////////////// Begin word extraction
-			///////////////////// /////////////////////////////
+      ///////////////////// Begin word extraction
+      ///////////////////// /////////////////////////////
 
-			// ***********************************************************************************************//
+      // ***********************************************************************************************//
 
-			int temporaryCounter = 0;
+      int temporaryCounter = 0;
 
-			// Filter threshold
-			int counterDoc = 0;
-			for (int i = 0; i < lines.size(); i++) {
+      // Filter threshold
+      int counterDoc = 0;
+      for (int i = 0; i < lines.size(); i++) {
 
-//				CharArraySet noise = EnglishAnalyzer.getDefaultStopSet();
+        //CharArraySet noise = EnglishAnalyzer.getDefaultStopSet();
 
-				// We are using a standard tokenizer that eliminates the stop
-				// words. We can use Stemming tokenizer such Porter
-				// A set of English noise keywords is used that will eliminates
-				// words such as "the, a, etc"
+        // We are using a standard tokenizer that eliminates the stop
+        // words. We can use Stemming tokenizer such Porter
+        // A set of English noise keywords is used that will eliminates
+        // words such as "the, a, etc"
 
-//				Analyzer analyzer = new StandardAnalyzer(noise);
-				Analyzer analyzer = new StandardAnalyzer();
-				List<String> token0 = Tokenizer.tokenizeString(analyzer, lines.get(i));
-				List<String> token = new ArrayList<String>();
-				//removing numbers/1-letter keywords
-				for (int j=0; j<token0.size();j++){
-					if ((!token0.get(j).matches(".*\\d+.*")
-							&&
-							(token0.get(j)).length() >1)){
-						token.add(token0.get(j));
-					}
-				}
+        Analyzer analyzer = new StandardAnalyzer();
+        List<String> token0 = Tokenizer.tokenizeString(analyzer, lines.get(i));
+        List<String> token = new ArrayList<String>();
+        //removing numbers/1-letter keywords
+        for (int j=0; j<token0.size();j++){
+          if ((!token0.get(j).matches(".*\\d+.*")
+            &&
+            (token0.get(j)).length() >1)){
+            token.add(token0.get(j));
+          }
+        }
 
-				temporaryCounter = temporaryCounter + token.size();
+        temporaryCounter = temporaryCounter + token.size();
 
 
 
-				for (int j = 0; j < token.size(); j++) {
+        for (int j = 0; j < token.size(); j++) {
 
-					// Avoid counting occurrences of words in the same file
-					if (!lookup2.get(file.getName()).contains(token.get(j))) {
-						lookup2.put(file.getName(), token.get(j));
-					}
+          // Avoid counting occurrences of words in the same file
+          if (!lookup2.get(file.getName()).contains(token.get(j))) {
+            lookup2.put(file.getName(), token.get(j));
+          }
 
-					// Avoid counting occurrences of words in the same file
-					if (!lookup1.get(token.get(j)).contains(file.getName())) {
-						lookup1.put(token.get(j), file.getName());
-					}
+          // Avoid counting occurrences of words in the same file
+          if (!lookup1.get(token.get(j)).contains(file.getName())) {
+            lookup1.put(token.get(j), file.getName());
+          }
 
-				}
+        }
 
-			}
+      }
 
-		}
+    }
 
-		// Printer.debugln(lookup.toString());
-		return new TextExtractPar(lookup1, lookup2);
+    // Printer.debugln(lookup.toString());
+    return new TextExtractPar(lookup1, lookup2);
 
-	}
+  }
 
 }

@@ -133,13 +133,11 @@ public class IEXZMF implements Serializable {
 	// ***********************************************************************************************/
 
 	public static List<String> query(List<Token> token, IEX2Lev disj, int bucketSize, int falsePosRate)
-			throws InvalidKeyException, InvalidAlgorithmParameterException, NoSuchAlgorithmException,
-			NoSuchProviderException, NoSuchPaddingException, IOException {
+    throws Exception {
 		List<String> result = new ArrayList<String>();
 
 		for (int i = 0; i < token.size(); i++) {
-			List<String> resultTMP = RR2Lev.query(token.get(i).getTokenMMGlobal(), disj.getGlobalMM().getDictionary(),
-					disj.getGlobalMM().getArray());
+			List<String> resultTMP = RR2Lev.query(null,false);
 
 			// Printer.debugln("Result of MM Global "+resultTMP);
 
