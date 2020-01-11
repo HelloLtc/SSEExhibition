@@ -140,8 +140,8 @@ public class GlobalArray {
         .prepareStatement("SELECT GlobalCounter FROM GlobalArrayList WHERE GlobalTempList=?");
       ps.setBytes(1, GlobalTempList);
       rs = ps.executeQuery();
-      rs.next();
-      temp = rs.getInt("GlobalCounter");
+      while(rs.next())
+        temp = rs.getInt("GlobalCounter");
     } catch (Exception es) {
       conn.rollback();
       throw es;

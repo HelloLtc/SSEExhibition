@@ -97,20 +97,20 @@ public class BloomGlobalArray {
 
   /**
    * 在GlobalArrayList中插入一条记录
-   * @param counter 索引（唯一标识）
+   * 由于索引（唯一标识）自动递增，在SQL语句中不需添加索引
    * @param templist 包含关键字的文件名/索引
    * @throws Exception
    */
-  public static void InsertGlobalArrayList(int counter,byte[] templist) throws Exception {
+  public static void InsertGlobalArrayList(byte[] templist) throws Exception {
     Connection conn = null;
     PreparedStatement ps = null;
+
     try {
       conn = IEXZMFDB.getConnection();
       conn.setAutoCommit(false);
       ps = conn
-        .prepareStatement("INSERT INTO GlobalArrayList (GlobalCounter,GlobalTempList) values(?,?)");
-      ps.setInt(1, counter);
-      ps.setBytes(2, templist);
+        .prepareStatement("INSERT INTO GlobalArrayList (GlobalTempList) values(?)");
+      ps.setBytes(1, templist);
       ps.executeUpdate();
       conn.commit();
     } catch (Exception es) {
@@ -121,6 +121,35 @@ public class BloomGlobalArray {
       ps.close();
       conn.close();
     }
+  }
+
+  /**
+   * 根据包含关键字的文件名/索引查找索引（唯一标识）
+   * @param templist 包含关键字的文件名/索引
+   * @return 索引（唯一标识）
+   * @throws Exception
+   */
+  public static int FindGlobalArrayList(byte[] templist) throws Exception {
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    int  GlobalCounter = -1;
+    try {
+      conn = IEXZMFDB.getConnection();
+      ps = conn
+        .prepareStatement("SELECT GlobalCounter FROM GlobalArrayList WHERE GlobalTempList=?");
+      ps.setBytes(1, templist);
+      rs = ps.executeQuery();
+      while(rs.next())
+        GlobalCounter = rs.getInt("GlobalCounter");//取得最新插入的记录
+    } catch (Exception es) {
+      conn.rollback();
+      throw es;
+    } finally {
+      ps.close();
+      conn.close();
+    }
+    return GlobalCounter;
   }
 
   /**

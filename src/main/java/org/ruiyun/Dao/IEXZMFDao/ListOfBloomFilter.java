@@ -164,7 +164,6 @@ public class ListOfBloomFilter {
   public static void TruncateListOfBloomFilter() throws Exception {
     Connection conn = null;
     PreparedStatement ps = null;
-
     try {
       conn = IEXZMFDB.getConnection();
       ps = conn

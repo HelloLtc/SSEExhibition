@@ -177,8 +177,8 @@ public class LocalArray {
       ps = con.prepareStatement("SELECT LocalCounter FROM LocalArrayList WHERE LocalTempList=?");
       ps.setBytes(1, LocalTempList);
       rs = ps.executeQuery();
-      rs.next();
-      temp = rs.getInt("LocalCounter");
+      while(rs.next())
+        temp = rs.getInt("LocalCounter");
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
