@@ -19,91 +19,26 @@ import java.util.Map;
  * @className TestIEXZMF
  * @since 2020/1/11 14:11
  */
-public class TestIEXZMF{
+public class TestSearchIEXZMF {
   private static final int falsePosRate = 25;
   private static final int maxLengthOfMask = 20;
-
   public static void main(String[] args) throws Exception {
 
-    Printer.addPrinter(new Printer(Printer.LEVEL.EXTRA));
-
+    System.out.println("Enter your password :");
     BufferedReader keyRead = new BufferedReader(new InputStreamReader(System.in));
-
-    Printer.normalln("Enter your password :");
-
     String pass = keyRead.readLine();
     //String pass = "123";
 
     List<byte[]> listSK = IEXZMF.keyGen(128, pass, "salt/saltInvIX", 100);
-
-    long startTime = System.nanoTime();
-    System.out.println("Would you like to add some new file ? <Yes/No>");
-
-    String addfile = keyRead.readLine();
-    //String addfile = "yes";
-    while(!addfile.equalsIgnoreCase("Yes")&&!addfile.equalsIgnoreCase("No")){
-      System.out.println("Error input!");
-      System.out.println("----------------------------------------------");
-      System.out.println("Would you like to add some new file ? <Yes/No>");
-      addfile = keyRead.readLine();
-    }
-    if(addfile.equalsIgnoreCase("Yes")){
-      Printer.normalln("Enter the relative path name of the folder that contains the files to make searchable");
-
-      String pathName = keyRead.readLine();
-
-      TextProc.TextProc(false, pathName);
-
-      long startTime2 = System.nanoTime();
-      Printer.debugln("Number of keywords pairs (w. id): " + TextExtractPar.lp1.size());
-      Printer.debugln("Number of keywords " + TextExtractPar.lp1.keySet().size());
-
-      Printer.debugln("\n Beginning of global encrypted multi-map construction \n");
-
-      int bigBlock = 2;
-      int smallBlock = 1;
-      int dataSize = 0;
-
-
-      // Construction by Cash et al NDSS 2014
-
-      for (String keyword : TextExtractPar.lp1.keySet()) {
-
-        if (dataSize < TextExtractPar.lp1.get(keyword).size()) {
-          dataSize = TextExtractPar.lp1.get(keyword).size();
-        }
-
-      }
-
-
-      IEXZMF.constructEMMParGMM(listSK.get(1), TextExtractPar.lp1, bigBlock, smallBlock, dataSize);//对文件进行2lev分块
-
-      Printer.debugln("\n Beginning of local encrypted multi-map construction \n");
-
-      IEXZMF.constructMatryoshkaPar(new ArrayList(TextExtractPar.lp1.keySet()), listSK.get(0), listSK.get(1),
-        maxLengthOfMask, falsePosRate);//IEXZMF初始化
-
-      long endTime2 = System.nanoTime();
-
-      long totalTime2 = endTime2 - startTime2;
-      Printer.statsln("\n*****************************************************************");
-      Printer.statsln("\n\t\tSTATS");
-      Printer.statsln("\n*****************************************************************");
-
-      Printer.statsln(
-        "\nTotal Time elapsed for the local multi-map construction in seconds: " + totalTime2 / 1000000);
-    }
-    // Beginning of search phase
-
     while (true) {
 
-      Printer.normalln("How many disjunctions? ");
+      System.out.println("How many disjunctions? ");
       int numDisjunctions = Integer.parseInt(keyRead.readLine());
 
       // Storing the CNF form
       String[][] bool = new String[numDisjunctions][];
       for (int i = 0; i < numDisjunctions; i++) {
-        Printer.normalln("Enter the keywords of the " + i + "th disjunctions ");
+        System.out.println("Enter the keywords of the " + i + "th disjunctions ");
         bool[i] = keyRead.readLine().split(" ");
       }
 
@@ -204,7 +139,7 @@ public class TestIEXZMF{
 
       }
 
-      Printer.normalln("Result " + tmpBol);
+      System.out.println("Result " + tmpBol);
 
       long endTime3 = System.nanoTime();
       long totalTime3 = endTime3 - startTime3;
