@@ -1,6 +1,7 @@
 package org.ruiyun.crypto;
 import org.ruiyun.Dao.IEX2levDao.GlobalArray;
 import org.ruiyun.Dao.IEX2levDao.LocalArray;
+import org.ruiyun.Dao.IEXZMFDao.*;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -30,12 +31,12 @@ public class TestTruncateDB {
       LocalArray.TruncateLocalArrayList();
       System.out.println("IEX2Lev数据删除成功");
     }else if(DBName.equalsIgnoreCase("IEXZMF")){
-//      BloomFilterID.TruncateBloomFilterID();;
-//      BloomFilterMap.TruncateBloomFilterMap();
-//      BloomFilterStart.TruncateBloomFilterStart();
-//      BloomGlobalArray.TruncateGlobalArrayIndex();
-//      BloomGlobalArray.TruncateGlobalArrayList();
-//      ListOfBloomFilter.TruncateListOfBloomFilter();
+      BloomFilterID.TruncateBloomFilterID();;
+      BloomFilterMap.TruncateBloomFilterMap();
+      BloomFilterStart.TruncateBloomFilterStart();
+      BloomGlobalArray.TruncateGlobalArrayIndex();
+      BloomGlobalArray.TruncateGlobalArrayList();
+      ListOfBloomFilter.TruncateListOfBloomFilter();
       System.out.println("IEXZMF数据删除成功");
     }
   }

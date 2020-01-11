@@ -191,8 +191,6 @@ public class BloomGlobalArray {
       ps.setInt(1, GlobalCounter);
       rs = ps.executeQuery();
       rs.next();
-      if(!rs.next())
-        return null;
       temp = rs.getBytes("GlobalTempList");
     } catch (Exception e) {
       e.printStackTrace();

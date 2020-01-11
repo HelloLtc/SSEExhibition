@@ -26,6 +26,9 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
 import javax.crypto.NoSuchPaddingException;
+
+import org.ruiyun.Dao.IEXZMFDao.ListOfBloomFilter;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -33,6 +36,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,633 +45,697 @@ import java.util.Map;
 
 public class ZMF {
 
-	// The keyHMAC enables the instantiation of the Random ORacle. There is no
-	// need for keeping this key secret
-	public static final byte[] keyHMAC = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
-			0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17 };
+  // The keyHMAC enables the instantiation of the Random ORacle. There is no
+  // need for keeping this key secret
+  public static final byte[] keyHMAC = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c,
+    0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17 };
 
-	// This list if used for testing purposes
-	public static List<String> results = new ArrayList<String>();
+  // This list if used for testing purposes
+  public static List<String> results = new ArrayList<String>();
 
-	private ZMF() {
-	}
+  private ZMF() {
+  }
 
-	// ***********************************************************************************************//
+  // ***********************************************************************************************//
 
-	///////////////////// KeyGenSM /////////////////////////////
+  ///////////////////// KeyGenSM /////////////////////////////
 
-	// ***********************************************************************************************//
+  // ***********************************************************************************************//
 
-	public static byte[] keyGenSM(int keySize, String password, String filePathString, int icount)
-			throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
-		File f = new File(filePathString);
-		byte[] salt = null;
+  public static byte[] keyGenSM(int keySize, String password, String filePathString, int icount)
+    throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
+    File f = new File(filePathString);
+    byte[] salt = null;
 
-		if (f.exists() && !f.isDirectory()) {
-			salt = CryptoPrimitives.readAlternateImpl(filePathString);
-		} else {
-			salt = CryptoPrimitives.randomBytes(8);
-			CryptoPrimitives.write(salt, "saltSetM", "salt");
+    if (f.exists() && !f.isDirectory()) {
+      salt = CryptoPrimitives.readAlternateImpl(filePathString);
+    } else {
+      salt = CryptoPrimitives.randomBytes(8);
+      CryptoPrimitives.write(salt, "saltSetM", "salt");
 
-		}
+    }
 
-		byte[] key = CryptoPrimitives.keyGenSetM(password, salt, icount, keySize);
-		return key;
+    byte[] key = CryptoPrimitives.keyGenSetM(password, salt, icount, keySize);
+    return key;
 
-	}
+  }
 
-	// ***********************************************************************************************//
+  // ***********************************************************************************************//
 
-	///////////////////// SetupSM /////////////////////////////
+  ///////////////////// SetupSM /////////////////////////////
 
-	// ***********************************************************************************************//
+  // ***********************************************************************************************//
 
-	public static List<boolean[]> setupSetM(byte[] key, String keyword, Multimap<String, String> documentsComposition,
-			Multimap<String, String> keywordComposition, int maxLengthOfMask, int falsePosRate)
-			throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException,
-			IOException {
+  public static List<boolean[]> setupSetM(byte[] key, String keyword, Multimap<String, String> documentsComposition,
+                                          Multimap<String, String> keywordComposition, int maxLengthOfMask, int falsePosRate)
+    throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException,
+    IOException {
 
-		// Extract all documents' identifiers that are associated to the keyword
+    // Extract all documents' identifiers that are associated to the keyword
 
-		int identifierCounter = 0;
-		int blockSize = 128;
+    int identifierCounter = 0;
+    int blockSize = 128;
 
-		List<boolean[]> listOfBloomFilter = new ArrayList<boolean[]>();
-		for (String identifier : keywordComposition.get(keyword)) {
+    List<boolean[]> listOfBloomFilter = new ArrayList<boolean[]>();
+    for (String identifier : keywordComposition.get(keyword)) {
 
-			// Creation of ESet
-			HashSet<Integer> state = new HashSet<Integer>();
+      // Creation of ESet
+      HashSet<Integer> state = new HashSet<Integer>();
 
-			// Bloom Filter size setup such that it is a multiple of 2. This is
-			// necessary when inserting the result of a hash which has a maximum
-			// multiple of 2^x-1
+      // Bloom Filter size setup such that it is a multiple of 2. This is
+      // necessary when inserting the result of a hash which has a maximum
+      // multiple of 2^x-1
 
-			double arraySize = falsePosRate * documentsComposition.get(identifier).size() / Math.log(2);
+      double arraySize = falsePosRate * documentsComposition.get(identifier).size() / Math.log(2);
 
-			int counter = 0;
-			for (int j = 0; j < 1000; j++) {
-				if (arraySize > Math.pow(2, counter)) {
-					counter++;
-				} else {
-					break;
-				}
-			}
+      int counter = 0;
+      for (int j = 0; j < 1000; j++) {
+        if (arraySize > Math.pow(2, counter)) {
+          counter++;
+        } else {
+          break;
+        }
+      }
 
-			// Creation of the Bloom filter
-			boolean[] bloomFilter = new boolean[(int) Math.pow(2, counter)];
+      // Creation of the Bloom filter
+      boolean[] bloomFilter = new boolean[(int) Math.pow(2, counter)];
 
-			// Key of PRF applied to elements
+      // Key of PRF applied to elements
 
-			byte[] keyPRF = new byte[key.length / 3];
-			System.arraycopy(key, 0, keyPRF, 0, key.length / 3);
+      byte[] keyPRF = new byte[key.length / 3];
+      System.arraycopy(key, 0, keyPRF, 0, key.length / 3);
 
-			// Key for the online cipher
+      // Key for the online cipher
 
-			byte[] keyOCHash = new byte[key.length / 3];
-			System.arraycopy(key, key.length / 3, keyOCHash, 0, key.length / 3);
+      byte[] keyOCHash = new byte[key.length / 3];
+      System.arraycopy(key, key.length / 3, keyOCHash, 0, key.length / 3);
 
-			byte[] keyOCEnc = new byte[key.length / 3];
-			System.arraycopy(key, 2 * key.length / 3, keyOCEnc, 0, key.length / 3);
+      byte[] keyOCEnc = new byte[key.length / 3];
+      System.arraycopy(key, 2 * key.length / 3, keyOCEnc, 0, key.length / 3);
 
-			// Second Step of Secure Set protocol
-			for (String word : documentsComposition.get(identifier)) {
+      // Second Step of Secure Set protocol
+      for (String word : documentsComposition.get(identifier)) {
 
-				// computation of the PRF based on CMAC-AES
-				byte[] cmac = CryptoPrimitives.generateCmac(keyPRF, keyword + word);
+        // computation of the PRF based on CMAC-AES
+        byte[] cmac = CryptoPrimitives.generateCmac(keyPRF, keyword + word);
 
-				// computation of the Random oracle based H1 on HMAC-SHA256
-				// computation of the Random oracle based H2 on HMAC-SHA256
+        // computation of the Random oracle based H1 on HMAC-SHA256
+        // computation of the Random oracle based H2 on HMAC-SHA256
 
-				int position = 0;
-				boolean mask;
+        int position = 0;
+        boolean mask;
 
-				// False positive rate is the number of hash functions
+        // False positive rate is the number of hash functions
 
-				for (int i = 0; i < falsePosRate; i++) {
-					byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
-							i + CryptoPrimitives.booleanToString(CryptoPrimitives.bytesToBoolean(cmac)));
+        for (int i = 0; i < falsePosRate; i++) {
+          byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
+            i + CryptoPrimitives.booleanToString(CryptoPrimitives.bytesToBoolean(cmac)));
 
-					// We truncate the needed bits from the output of the HMAC
-					// to get the bit 1 to counter
+          // We truncate the needed bits from the output of the HMAC
+          // to get the bit 1 to counter
 
-					position = CryptoPrimitives.getIntFromByte(hmac, maxLengthOfMask);
-					if (!state.contains(position)) {
-						// Transform the position into an array of boolean []
-						boolean[] messageBol = CryptoPrimitives.intToBoolean(position, maxLengthOfMask);
+          position = CryptoPrimitives.getIntFromByte(hmac, maxLengthOfMask);
+          if (!state.contains(position)) {
+            // Transform the position into an array of boolean []
+            boolean[] messageBol = CryptoPrimitives.intToBoolean(position, maxLengthOfMask);
 
-						boolean[][] results = CryptoPrimitives.onlineCipher(keyOCHash, keyOCEnc, messageBol);
+            boolean[][] results = CryptoPrimitives.onlineCipher(keyOCHash, keyOCEnc, messageBol);
 
-						// Printer.debugln("Time of the OCs "+
-						// messageBol.length+ " "+(endTime-startTime)+ "
-						// "+(endTime1-startTime1));
+            // Printer.debugln("Time of the OCs "+
+            // messageBol.length+ " "+(endTime-startTime)+ "
+            // "+(endTime1-startTime1));
 
-						boolean[] positionFinal = new boolean[counter * blockSize];
+            boolean[] positionFinal = new boolean[counter * blockSize];
 
-						for (int s = 0; s < counter; s++) {
-							System.arraycopy(results[s], 0, positionFinal, s * blockSize, blockSize);
-						}
+            for (int s = 0; s < counter; s++) {
+              System.arraycopy(results[s], 0, positionFinal, s * blockSize, blockSize);
+            }
 
-						byte[] hmac2 = CryptoPrimitives.generateHmac(keyHMAC,
-								identifierCounter + CryptoPrimitives.booleanToString(positionFinal));
+            byte[] hmac2 = CryptoPrimitives.generateHmac(keyHMAC,
+              identifierCounter + CryptoPrimitives.booleanToString(positionFinal));
 
-						// We truncate the needed bits from the output of the
-						// HMAC to get the bit 1 to counter
-						mask = (CryptoPrimitives.getBit(hmac2, 0) != 0);
+            // We truncate the needed bits from the output of the
+            // HMAC to get the bit 1 to counter
+            mask = (CryptoPrimitives.getBit(hmac2, 0) != 0);
 
-						int pos = CryptoPrimitives.getIntFromByte(hmac, counter);
-						bloomFilter[pos] = true ^ mask;
-						state.add(pos);
-					}
+            int pos = CryptoPrimitives.getIntFromByte(hmac, counter);
+            bloomFilter[pos] = true ^ mask;
+            state.add(pos);
+          }
 
-				}
-			}
+        }
+      }
 
-			for (int j = 0; j < bloomFilter.length; j++) {
+      for (int j = 0; j < bloomFilter.length; j++) {
 
-				if (!state.contains(j)) {
-					boolean[] messageBol = CryptoPrimitives.intToBoolean(j, maxLengthOfMask);
-					boolean[][] results = CryptoPrimitives.onlineCipher(keyOCHash, keyOCEnc, messageBol);
-					boolean[] positionFinal = new boolean[counter * blockSize];
-					for (int s = 0; s < counter; s++) {
-						System.arraycopy(results[s], 0, positionFinal, s * blockSize, blockSize);
-					}
+        if (!state.contains(j)) {
+          boolean[] messageBol = CryptoPrimitives.intToBoolean(j, maxLengthOfMask);
+          boolean[][] results = CryptoPrimitives.onlineCipher(keyOCHash, keyOCEnc, messageBol);
+          boolean[] positionFinal = new boolean[counter * blockSize];
+          for (int s = 0; s < counter; s++) {
+            System.arraycopy(results[s], 0, positionFinal, s * blockSize, blockSize);
+          }
 
-					byte[] hmac3 = CryptoPrimitives.generateHmac(keyHMAC,
-							identifierCounter + CryptoPrimitives.booleanToString(positionFinal));
+          byte[] hmac3 = CryptoPrimitives.generateHmac(keyHMAC,
+            identifierCounter + CryptoPrimitives.booleanToString(positionFinal));
 
-					bloomFilter[j] = false ^ (CryptoPrimitives.getBit(hmac3, 0) != 0);
+          bloomFilter[j] = false ^ (CryptoPrimitives.getBit(hmac3, 0) != 0);
 
-				}
-			}
+        }
+      }
 
-			listOfBloomFilter.add(bloomFilter);
+      listOfBloomFilter.add(bloomFilter);
 
-			identifierCounter++;
+      identifierCounter++;
 
-		}
+    }
 
-		return listOfBloomFilter;
-	}
+    return listOfBloomFilter;
+  }
 
-	/*
-	 * The version 2 of Setup handles the OC evaluation in a much faster way
-	 * where the client will store in the setup phase all possible evaluations
-	 * for the largest BF and will truncate these pre-computed values when
-	 * required. The first version of Setup was computing the OC for every BF
-	 * which was redundant.
-	 */
+  /*
+   * The version 2 of Setup handles the OC evaluation in a much faster way
+   * where the client will store in the setup phase all possible evaluations
+   * for the largest BF and will truncate these pre-computed values when
+   * required. The first version of Setup was computing the OC for every BF
+   * which was redundant.
+   */
 
-	// ***********************************************************************************************//
+  // ***********************************************************************************************//
 
-	///////////////////// SetupSM /////////////////////////////
+  ///////////////////// SetupSM /////////////////////////////
 
-	// ***********************************************************************************************//
+  // ***********************************************************************************************//
 
-	public static Map<String, boolean[]> setupSetMV2(byte[] key, String keyword,
-			Multimap<String, String> documentsComposition, Multimap<String, String> keywordComposition,
-			int falsePosRate) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException,
-			NoSuchPaddingException, IOException {
+  public static Map<String, boolean[]> setupSetMV2(byte[] key, String keyword,
+                                                   Multimap<String, String> documentsComposition, Multimap<String, String> keywordComposition,
+                                                   int falsePosRate) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException,
+    NoSuchPaddingException, IOException {
 
-		// Extract all documents' identifiers that are associated to the keyword
+    // Extract all documents' identifiers that are associated to the keyword
 
-		// Initialize a set that will contain all elements
+    // Initialize a set that will contain all elements
 
-		Multimap<String, String> totalElements = ArrayListMultimap.create();
+    Multimap<String, String> totalElements = ArrayListMultimap.create();
 
-		int maxSize = 0;
-		Map<String, Map<Integer, Boolean>> state = new HashMap<String, Map<Integer, Boolean>>();
+    int maxSize = 0;
+    Map<String, Map<Integer, Boolean>> state = new HashMap<String, Map<Integer, Boolean>>();
 
-		// Create a Set that contains all elements of documents that contain
-		// "keyword"
-		for (String identifier : keywordComposition.get(keyword)) {
+    // Create a Set that contains all elements of documents that contain
+    // "keyword"
+    for (String identifier : keywordComposition.get(keyword)) {//包含keyword的所有文件
 
-			// Filtering the keywords that are associated to a large number of
-			// keywords
-			for (String word : documentsComposition.get(identifier)) {
-				if (!totalElements.get(word).contains(identifier) && ((double) TextExtractPar.lp1.get(word).size()
-						/ TextExtractPar.maxTupleSize > IEXZMF.filterParameter)) {
-					totalElements.put(word, identifier);
-				}
-			}
+      // Filtering the keywords that are associated to a large number of
+      // keywords
+      //IEXZMF.filterParameter是一个所有关键词中出现在所有文件中次数最多的关键词的次数值，为方便过滤一些出现次数少的关键词和文件
+      for (String word : documentsComposition.get(identifier)) {//word是identifier文件包含的关键词
+        if (!totalElements.get(word).contains(identifier) && ((double) TextExtractPar.lp1.get(word).size()
+          / TextExtractPar.maxTupleSize > IEXZMF.filterParameter)) {
+          totalElements.put(word, identifier);
+        }
+      }
 
-			if (documentsComposition.get(identifier).size() > maxSize) {
-				maxSize = documentsComposition.get(identifier).size();
-			}
+      if (documentsComposition.get(identifier).size() > maxSize) {
+        maxSize = documentsComposition.get(identifier).size();//记录identifier中关键词的数量
+      }
 
-			state.put(identifier, new HashMap<Integer, Boolean>());
+      state.put(identifier, new HashMap<Integer, Boolean>());//初始化状态
 
-		}
+    }
 
-		// This can be used to reduce the size of the Bloom filters to store
-		// only significant keywords
+    // This can be used to reduce the size of the Bloom filters to store
+    // only significant keywords
 
-		// Limiting to a number of 1000 keywords per file
+    // Limiting to a number of 1000 keywords per file
 
-		// maxSize =1000;
+    // maxSize =1000;
 
-		// determine the size of the largest array
+    // determine the size of the largest array
 
-		double maxArraySize = falsePosRate * maxSize / Math.log(2);
+    double maxArraySize = falsePosRate * maxSize / Math.log(2);
 
-		// Creation of an array that has as a size a power of 2
-		int counter = 0;
-		for (int j = 0; j < 1000; j++) {
-			if (maxArraySize > Math.pow(2, counter)) {
-				counter++;
-			} else {
-				break;
-			}
-		}
+    // Creation of an array that has as a size a power of 2
+    int counter = 0;
+    for (int j = 0; j < 1000; j++) {
+      if (maxArraySize > Math.pow(2, counter)) {
+        counter++;
+      } else {
+        break;
+      }
+    }
 
-		// The final size of the array equals
-		maxArraySize = Math.pow(2, counter);
+    // The final size of the array equals
+    maxArraySize = Math.pow(2, counter);//转换为2^counter的值
 
-		// Key of PRF applied to elements
+    // Key of PRF applied to elements
+    //密钥的生成
+    byte[] keyPRF = new byte[key.length / 3];
 
-		byte[] keyPRF = new byte[key.length / 3];
+    System.arraycopy(key, 0, keyPRF, 0, key.length / 3);//arraycopy把key从0开始的key.length / 3长度的信息复制到keyPRF从0开始中
 
-		System.arraycopy(key, 0, keyPRF, 0, key.length / 3);
+    // Printer.debugln("Key PRF "+
+    // CryptoPrimitives.booleanToString(CryptoPrimitives.bytesToBoolean(keyPRF)));
 
-		// Printer.debugln("Key PRF "+
-		// CryptoPrimitives.booleanToString(CryptoPrimitives.bytesToBoolean(keyPRF)));
+    // Key for the online cipher
 
-		// Key for the online cipher
+    byte[] keyOCHash = new byte[key.length / 3];
+    System.arraycopy(key, key.length / 3, keyOCHash, 0, key.length / 3);
 
-		byte[] keyOCHash = new byte[key.length / 3];
-		System.arraycopy(key, key.length / 3, keyOCHash, 0, key.length / 3);
+    byte[] keyOCEnc = new byte[key.length / 3];
+    System.arraycopy(key, 2 * key.length / 3, keyOCEnc, 0, key.length / 3);
 
-		byte[] keyOCEnc = new byte[key.length / 3];
-		System.arraycopy(key, 2 * key.length / 3, keyOCEnc, 0, key.length / 3);
+    // Creation of online Cipher values in memory
 
-		// Creation of online Cipher values in memory
+    List<byte[][]> onlineCipherList = new ArrayList<byte[][]>();
 
-		List<byte[][]> onlineCipherList = new ArrayList<byte[][]>();
+    for (int i = 0; i < maxArraySize; i++) {//初始化OC
 
-		for (int i = 0; i < maxArraySize; i++) {
+      boolean[] messageBol = CryptoPrimitives.intToBoolean(i, counter);//把i转换为bool类型，长度为counter
+      onlineCipherList.add(CryptoPrimitives.onlineCipherOWF(keyOCHash, keyOCEnc, messageBol));//messageBol进行OC加密并添加到onlineCipherList
 
-			boolean[] messageBol = CryptoPrimitives.intToBoolean(i, counter);
-			onlineCipherList.add(CryptoPrimitives.onlineCipherOWF(keyOCHash, keyOCEnc, messageBol));
+    }
 
-		}
+    // Block Size of the OC in bytes
 
-		// Block Size of the OC in bytes
+    int blockSize = 32;
 
-		int blockSize = 32;
+    // Initialization of all Matryoshka filters
 
-		// Initialization of all Matryoshka filters
+    boolean mask;
 
-		boolean mask;
+    Map<String, boolean[]> listOfBloomFilter = new HashMap<String, boolean[]>();
+    //以下是对单每个包含keyword的文件进行初始化
+    for (String identifier : keywordComposition.get(keyword)) {//取出包含关键字的所有文件identifier
 
-		Map<String, boolean[]> listOfBloomFilter = new HashMap<String, boolean[]>();
+      // determine the size of the Matryoshka filter
+      int count = 0;
+      double filterSize = 0;
 
-		for (String identifier : keywordComposition.get(keyword)) {
+      // MF each has a size at most maxSize
+      if (documentsComposition.get(identifier).size() < maxSize) {
+        filterSize = falsePosRate * documentsComposition.get(identifier).size() / Math.log(2);
+      } else {
+        filterSize = falsePosRate * maxSize / Math.log(2);
+      }
 
-			// determine the size of the Matryoshka filter
-			int count = 0;
-			double filterSize = 0;
+      // Assuming of course that there is no filter with more than 2^1000
+      // cells
+      for (int j = 0; j < 1000; j++) {
+        if (filterSize > Math.pow(2, count)) {
+          count++;
+        } else {
+          break;
+        }
+      }
+      // creation of an empty filter
+      boolean[] bloomFilter = new boolean[(int) Math.pow(2, count)];
 
-			// MF each has a size at most maxSize
-			if (documentsComposition.get(identifier).size() < maxSize) {
-				filterSize = falsePosRate * documentsComposition.get(identifier).size() / Math.log(2);
-			} else {
-				filterSize = falsePosRate * maxSize / Math.log(2);
-			}
+      // initialization of the state
 
-			// Assuming of course that there is no filter with more than 2^1000
-			// cells
-			for (int j = 0; j < 1000; j++) {
-				if (filterSize > Math.pow(2, count)) {
-					count++;
-				} else {
-					break;
-				}
-			}
-			// creation of an empty filter
-			boolean[] bloomFilter = new boolean[(int) Math.pow(2, count)];
+      for (int v = 0; v < Math.pow(2, count); v++) {//对每一个word初始化状态state
+        state.get(identifier).put(v, false);
 
-			// initialization of the state
+      }
 
-			for (int v = 0; v < Math.pow(2, count); v++) {
-				state.get(identifier).put(v, false);
+      // Adding the mask to all positions of the filter
+      for (int j = 0; j < (int) Math.pow(2, count); j++) {//对每一个bloomFilter进行初始化，也就是每个word对应20个随机位置的Bit
 
-			}
+        // Truncating only the required position from the OC
+        byte[] positionFinal = new byte[count * blockSize];
 
-			// Adding the mask to all positions of the filter
-			for (int j = 0; j < (int) Math.pow(2, count); j++) {
+        for (int s = 0; s < count; s++) {//获取对应OC的值
+          System.arraycopy(onlineCipherList.get(j)[s], 0, positionFinal, s * blockSize, blockSize);
+        }
 
-				// Truncating only the required position from the OC
-				byte[] positionFinal = new byte[count * blockSize];
+        // Computing the Random Oracle
 
-				for (int s = 0; s < count; s++) {
-					System.arraycopy(onlineCipherList.get(j)[s], 0, positionFinal, s * blockSize, blockSize);
-				}
+        byte[] hmac2 = CryptoPrimitives.generateHmac(keyHMAC,
+          CryptoPrimitives.concat(identifier.getBytes(), positionFinal));//这是把所有文件和OC的值先连接再进行HMAC
 
-				// Computing the Random Oracle
+        // We truncate the needed bits from the output of the HMAC to
+        // get the bit 1 to counter
+        mask = (CryptoPrimitives.getBit(hmac2, 0) != 0);//根据hmac2获取一个Bit
+        bloomFilter[j] = mask;
+      }
 
-				byte[] hmac2 = CryptoPrimitives.generateHmac(keyHMAC,
-						CryptoPrimitives.concat(identifier.getBytes(), positionFinal));
+      listOfBloomFilter.put(identifier, bloomFilter);
 
-				// We truncate the needed bits from the output of the HMAC to
-				// get the bit 1 to counter
-				mask = (CryptoPrimitives.getBit(hmac2, 0) != 0);
-				bloomFilter[j] = mask;
-			}
+    }
 
-			listOfBloomFilter.put(identifier, bloomFilter);
+    // Insertion of the elements in the filters
 
-		}
+    for (String word : totalElements.keySet()) {//totalElements包含keyword文件的所有关键字
 
-		// Insertion of the elements in the filters
+      for (String id : totalElements.get(word)) {
 
-		for (String word : totalElements.keySet()) {
+        // determine the size of the Matryoshka filter
+        int count = 0;
+        // double filterSize= falsePosRate *
+        // documentsComposition.get(id).size()/Math.log(2);
+        double filterSize = 0;
+        if (documentsComposition.get(id).size() < maxSize) {
+          filterSize = falsePosRate * documentsComposition.get(id).size() / Math.log(2);
+        } else {
+          filterSize = falsePosRate * maxSize / Math.log(2);
+        }
 
-			for (String id : totalElements.get(word)) {
+        for (int j = 0; j < 1000; j++) {
+          if (filterSize > Math.pow(2, count)) {
+            count++;
+          } else {
+            break;
+          }
+        }
 
-				// determine the size of the Matryoshka filter
-				int count = 0;
-				// double filterSize= falsePosRate *
-				// documentsComposition.get(id).size()/Math.log(2);
-				double filterSize = 0;
-				if (documentsComposition.get(id).size() < maxSize) {
-					filterSize = falsePosRate * documentsComposition.get(id).size() / Math.log(2);
-				} else {
-					filterSize = falsePosRate * maxSize / Math.log(2);
-				}
+        for (int j = 0; j < falsePosRate; j++) {//每个word对应falsePosRate=20个字符，Bit在这里进行重新计算
 
-				for (int j = 0; j < 1000; j++) {
-					if (filterSize > Math.pow(2, count)) {
-						count++;
-					} else {
-						break;
-					}
-				}
+          // Computation of the position where the element will be
+          // inserted
+          byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
+            CryptoPrimitives.concat(String.valueOf(j).getBytes(), CryptoPrimitives.generateHmac(keyPRF,
+              CryptoPrimitives.concat(keyword.getBytes(), word.getBytes()))));//索引+关键字+二级关键词的Hmac，与上面初始化不同
 
-				for (int j = 0; j < falsePosRate; j++) {
+          int pos = CryptoPrimitives.getIntFromByte(hmac, count);//根据count把hmac转换为整数位置
 
-					// Computation of the position where the element will be
-					// inserted
-					byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
-							CryptoPrimitives.concat(String.valueOf(j).getBytes(), CryptoPrimitives.generateHmac(keyPRF,
-									CryptoPrimitives.concat(keyword.getBytes(), word.getBytes()))));
+          if (state.get(id).get(pos).equals(false)) {
 
-					int pos = CryptoPrimitives.getIntFromByte(hmac, count);
+            boolean[] temp = listOfBloomFilter.get(id);
+            temp[pos] = true ^ temp[pos];
+            listOfBloomFilter.put(id, temp);
+            state.get(id).put(pos, true);
 
-					if (state.get(id).get(pos).equals(false)) {
+          }
+        }
+      }
+    }
 
-						boolean[] temp = listOfBloomFilter.get(id);
-						temp[pos] = true ^ temp[pos];
-						listOfBloomFilter.put(id, temp);
-						state.get(id).put(pos, true);
+    return listOfBloomFilter;
 
-					}
-				}
-			}
-		}
+  }
 
-		return listOfBloomFilter;
+  // ***********************************************************************************************//
 
-	}
+  ///////////////////// GenTokSM without partitioning
+  ///////////////////// /////////////////////////////
 
-	// ***********************************************************************************************//
+  // ***********************************************************************************************//
+  public static List<byte[]> genTokSMV2(byte[] key, String keywordONE, String keywordTWO, int maxLengthOfMask,
+                                        int falsePosRate) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException,
+    NoSuchPaddingException, IOException {
 
-	///////////////////// GenTokSM without partitioning
-	///////////////////// /////////////////////////////
+    List<byte[]> token = new ArrayList<byte[]>();
 
-	// ***********************************************************************************************//
-	public static List<byte[]> genTokSMV2(byte[] key, String keywordONE, String keywordTWO, int maxLengthOfMask,
-			int falsePosRate) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException,
-			NoSuchPaddingException, IOException {
+    int blockSize = 32;
 
-		List<byte[]> token = new ArrayList<byte[]>();
+    // Key of PRF applied to elements
 
-		int blockSize = 32;
+    byte[] keyPRF = new byte[key.length / 3];
+    System.arraycopy(key, 0, keyPRF, 0, key.length / 3);
 
-		// Key of PRF applied to elements
+    // Key for the online cipher
 
-		byte[] keyPRF = new byte[key.length / 3];
-		System.arraycopy(key, 0, keyPRF, 0, key.length / 3);
+    byte[] keyOCHash = new byte[key.length / 3];
+    System.arraycopy(key, key.length / 3, keyOCHash, 0, key.length / 3);
 
-		// Key for the online cipher
+    byte[] keyOCEnc = new byte[key.length / 3];
+    System.arraycopy(key, 2 * key.length / 3, keyOCEnc, 0, key.length / 3);
 
-		byte[] keyOCHash = new byte[key.length / 3];
-		System.arraycopy(key, key.length / 3, keyOCHash, 0, key.length / 3);
+    // computation of the PRF based on CMAC-AES
+    byte[] cmac = CryptoPrimitives.generateHmac(keyPRF,
+      CryptoPrimitives.concat(keywordONE.getBytes(), keywordTWO.getBytes()));//连接两个关键字并生成cmac
 
-		byte[] keyOCEnc = new byte[key.length / 3];
-		System.arraycopy(key, 2 * key.length / 3, keyOCEnc, 0, key.length / 3);
+    token.add(cmac);
 
-		// computation of the PRF based on CMAC-AES
-		byte[] cmac = CryptoPrimitives.generateHmac(keyPRF,
-				CryptoPrimitives.concat(keywordONE.getBytes(), keywordTWO.getBytes()));
+    int position = 0;
 
-		token.add(cmac);
+    // False positive rate is the number of hash functions
 
-		int position = 0;
+    for (int i = 0; i < falsePosRate; i++) {//falsePosRate=20,进行相同的处理,同上（初始化函数在上一个）
+      byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
+        CryptoPrimitives.concat(String.valueOf(i).getBytes(), cmac));
+      // We truncate the needed bits from the output of the HMAC to get
+      // the bit 1 to counter
+      position = CryptoPrimitives.getIntFromByte(hmac, maxLengthOfMask);
 
-		// False positive rate is the number of hash functions
+      // Transform the position into an array of boolean []
+      boolean[] messageBol = CryptoPrimitives.intToBoolean(position, maxLengthOfMask);
 
-		for (int i = 0; i < falsePosRate; i++) {
-			byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
-					CryptoPrimitives.concat(String.valueOf(i).getBytes(), cmac));
-			// We truncate the needed bits from the output of the HMAC to get
-			// the bit 1 to counter
-			position = CryptoPrimitives.getIntFromByte(hmac, maxLengthOfMask);
+      byte[][] results = CryptoPrimitives.onlineCipherOWF(keyOCHash, keyOCEnc, messageBol);//OC处理
+      // Truncating only the required position from the OC
+      byte[] positionFinal = new byte[maxLengthOfMask * blockSize];
 
-			// Transform the position into an array of boolean []
-			boolean[] messageBol = CryptoPrimitives.intToBoolean(position, maxLengthOfMask);
+      for (int s = 0; s < maxLengthOfMask; s++) {
+        System.arraycopy(results[s], 0, positionFinal, s * blockSize, blockSize);
+      }
 
-			byte[][] results = CryptoPrimitives.onlineCipherOWF(keyOCHash, keyOCEnc, messageBol);
-			// Truncating only the required position from the OC
-			byte[] positionFinal = new byte[maxLengthOfMask * blockSize];
+      token.add(positionFinal);
 
-			for (int s = 0; s < maxLengthOfMask; s++) {
-				System.arraycopy(results[s], 0, positionFinal, s * blockSize, blockSize);
-			}
+    }
+    return token;
 
-			token.add(positionFinal);
+  }
 
-		}
-		return token;
+  // ***********************************************************************************************//
 
-	}
+  ///////////////////// TestSM without partitioning
+  ///////////////////// /////////////////////////////
 
-	// ***********************************************************************************************//
+  // ***********************************************************************************************//
 
-	///////////////////// TestSM without partitioning
-	///////////////////// /////////////////////////////
+  public static boolean[] testSMV2(Map<String, boolean[]> listOfbloomFilter, List<byte[]> token, int ratePos)
+    throws UnsupportedEncodingException, SQLException {
+    boolean[] result = new boolean[ListOfBloomFilter.FindListOfBloomFilterSum()];
+    results = new ArrayList<String>();
+    // Fetch first the result of the PRF
+    byte[] prf = token.get(0);
 
-	// ***********************************************************************************************//
+    int blockSize = 32;
 
-	public static boolean[] testSMV2(Map<String, boolean[]> listOfbloomFilter, List<byte[]> token, int ratePos)
-			throws UnsupportedEncodingException {
-		boolean[] result = new boolean[listOfbloomFilter.size()];
-		results = new ArrayList<String>();
-		// Fetch first the result of the PRF
-		byte[] prf = token.get(0);
+    // For each Bloom filter compute whether or not the element exists
+    int position;
+    boolean mask;
+    int counter = 0;
+    for (String id : ListOfBloomFilter.FindListOfBloomFilterId()) {//对每一个文件进行搜索
 
-		int blockSize = 32;
+      for (int j = 0; j < ratePos; j++) {//ratePos=20，根据token的内容进行匹配
 
-		// For each Bloom filter compute whether or not the element exists
-		int position;
-		boolean mask;
-		int counter = 0;
-		for (String id : listOfbloomFilter.keySet()) {
+        byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
+          CryptoPrimitives.concat(String.valueOf(j).getBytes(), prf));//同上的索引+cmac进行Hmac加密
 
-			for (int j = 0; j < ratePos; j++) {
+        int count = (int) (Math.log(ListOfBloomFilter.FindListOfBloomFilterIdSum(id)) / Math.log(2));//FindListOfBloomFilter
 
-				byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
-						CryptoPrimitives.concat(String.valueOf(j).getBytes(), prf));
+        // Truncating only the required position from the OC
 
-				int count = (int) (Math.log(listOfbloomFilter.get(id).length) / Math.log(2));
+        byte[] positionFinal = new byte[count * blockSize];
 
-				// Truncating only the required position from the OC
+        System.arraycopy(token.get(j + 1), 0, positionFinal, 0, count * blockSize);//positionFinal存储关键词OC的值
 
-				byte[] positionFinal = new byte[count * blockSize];
+        // Computing the Random Oracle
+        byte[] hmac2 = CryptoPrimitives.generateHmac(keyHMAC,
+          CryptoPrimitives.concat(id.getBytes(), positionFinal));//与初始化中相同，对其OC的值重新计算Hmac
 
-				System.arraycopy(token.get(j + 1), 0, positionFinal, 0, count * blockSize);
+        // We truncate the needed bits from the output of the HMAC to
+        // get the bit 1 to counter
+        mask = (CryptoPrimitives.getBit(hmac2, 0) != 0);
 
-				// Computing the Random Oracle
-				byte[] hmac2 = CryptoPrimitives.generateHmac(keyHMAC,
-						CryptoPrimitives.concat(id.getBytes(), positionFinal));
+        // We truncate the needed bits from the output of the HMAC to
+        // get the bit 1 to counter
+        position = CryptoPrimitives.getIntFromByte(hmac, count);
+//
+        String tempss = ListOfBloomFilter.FindListOfBloomFilter(id);
+        boolean[] tempbool = CryptoPrimitives.StringToBoolean(tempss);
+        if (tempbool[position] ^ mask == true) {//存储的值与token计算的值异或，结果为true则为正确
+          result[counter] = true;
 
-				// We truncate the needed bits from the output of the HMAC to
-				// get the bit 1 to counter
-				mask = (CryptoPrimitives.getBit(hmac2, 0) != 0);
+        } else {
+          result[counter] = false;
+          break;
+        }
+      }
 
-				// We truncate the needed bits from the output of the HMAC to
-				// get the bit 1 to counter
-				position = CryptoPrimitives.getIntFromByte(hmac, count);
+      if (result[counter] == true) {//全部正确，则为包含关键字的文件
+        results.add(id);
+      }
 
-				if (listOfbloomFilter.get(id)[position] ^ mask == true) {
-					result[counter] = true;
+      counter++;
 
-				} else {
-					result[counter] = false;
-					break;
-				}
-			}
+    }
 
-			if (result[counter] == true) {
-				results.add(id);
-			}
+    return result;
+  }
 
-			counter++;
 
-		}
+  public static boolean[] testSMV22(Map<String, boolean[]> listOfbloomFilter, List<byte[]> token, int ratePos)
+    throws UnsupportedEncodingException, SQLException {
+    boolean[] result = new boolean[listOfbloomFilter.size()];
+    results = new ArrayList<String>();
+    // Fetch first the result of the PRF
+    byte[] prf = token.get(0);
 
-		return result;
-	}
+    int blockSize = 32;
 
-	// ***********************************************************************************************//
+    // For each Bloom filter compute whether or not the element exists
+    int position;
+    boolean mask;
+    int counter = 0;
+    for (String id : listOfbloomFilter.keySet()) {//对每一个文件进行搜索
 
-	///////////////////// GenTokSM without partitioning
-	///////////////////// /////////////////////////////
+      for (int j = 0; j < ratePos; j++) {//ratePos=20，根据token的内容进行匹配
 
-	// ***********************************************************************************************//
-	public static List<String> genTokSM(byte[] key, String keywordONE, String keywordTWO, int maxLengthOfMask,
-			int falsePosRate) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException,
-			NoSuchPaddingException, IOException {
+        byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
+          CryptoPrimitives.concat(String.valueOf(j).getBytes(), prf));//同上的索引+cmac进行Hmac加密
 
-		List<String> token = new ArrayList<String>();
+        int count = (int) (Math.log(listOfbloomFilter.get(id).length) / Math.log(2));
 
-		int blockSize = 128;
+        // Truncating only the required position from the OC
 
-		// Key of PRF applied to elements
+        byte[] positionFinal = new byte[count * blockSize];
 
-		byte[] keyPRF = new byte[key.length / 3];
-		System.arraycopy(key, 0, keyPRF, 0, key.length / 3);
+        System.arraycopy(token.get(j + 1), 0, positionFinal, 0, count * blockSize);//positionFinal存储关键词OC的值
 
-		// Key for the online cipher
+        // Computing the Random Oracle
+        byte[] hmac2 = CryptoPrimitives.generateHmac(keyHMAC,
+          CryptoPrimitives.concat(id.getBytes(), positionFinal));//与初始化中相同，对其OC的值重新计算Hmac
 
-		byte[] keyOCHash = new byte[key.length / 3];
-		System.arraycopy(key, key.length / 3, keyOCHash, 0, key.length / 3);
+        // We truncate the needed bits from the output of the HMAC to
+        // get the bit 1 to counter
+        mask = (CryptoPrimitives.getBit(hmac2, 0) != 0);
 
-		byte[] keyOCEnc = new byte[key.length / 3];
-		System.arraycopy(key, 2 * key.length / 3, keyOCEnc, 0, key.length / 3);
+        // We truncate the needed bits from the output of the HMAC to
+        // get the bit 1 to counter
+        position = CryptoPrimitives.getIntFromByte(hmac, count);
+//
 
-		// computation of the PRF based on CMAC-AES
-		byte[] cmac = CryptoPrimitives.generateCmac(keyPRF, keywordONE + keywordTWO);
+        if (listOfbloomFilter.get(id)[position] ^ mask == true) {//存储的值与token计算的值异或，结果为true则为正确
+          result[counter] = true;
 
-		token.add(CryptoPrimitives.booleanToString(CryptoPrimitives.bytesToBoolean(cmac)));
+        } else {
+          result[counter] = false;
+          break;
+        }
+      }
 
-		int position = 0;
+      if (result[counter] == true) {//全部正确，则为包含关键字的文件
+        results.add(id);
+      }
 
-		// False positive rate is the number of hash functions
+      counter++;
 
-		for (int i = 0; i < falsePosRate; i++) {
-			byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
-					i + CryptoPrimitives.booleanToString(CryptoPrimitives.bytesToBoolean(cmac)));
+    }
 
-			// We truncate the needed bits from the output of the HMAC to get
-			// the bit 1 to counter
-			position = CryptoPrimitives.getIntFromByte(hmac, maxLengthOfMask);
+    return result;
+  }
+  // ***********************************************************************************************//
 
-			// Transform the position into an array of boolean []
-			boolean[] messageBol = CryptoPrimitives.intToBoolean(position, maxLengthOfMask);
+  ///////////////////// GenTokSM without partitioning
+  ///////////////////// /////////////////////////////
 
-			boolean[][] results = CryptoPrimitives.onlineCipher(keyOCHash, keyOCEnc, messageBol);
-			boolean[] positionFinal = new boolean[maxLengthOfMask * blockSize];
-			for (int s = 0; s < maxLengthOfMask; s++) {
-				System.arraycopy(results[s], 0, positionFinal, s * blockSize, blockSize);
-			}
+  // ***********************************************************************************************//
+  public static List<String> genTokSM(byte[] key, String keywordONE, String keywordTWO, int maxLengthOfMask,
+                                      int falsePosRate) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException,
+    NoSuchPaddingException, IOException {
 
-			token.add(CryptoPrimitives.booleanToString(positionFinal));
+    List<String> token = new ArrayList<String>();
 
-		}
-		return token;
+    int blockSize = 128;
 
-	}
+    // Key of PRF applied to elements
 
-	// ***********************************************************************************************//
+    byte[] keyPRF = new byte[key.length / 3];
+    System.arraycopy(key, 0, keyPRF, 0, key.length / 3);
 
-	///////////////////// TestSM without partitioning
-	///////////////////// /////////////////////////////
+    // Key for the online cipher
 
-	// ***********************************************************************************************//
+    byte[] keyOCHash = new byte[key.length / 3];
+    System.arraycopy(key, key.length / 3, keyOCHash, 0, key.length / 3);
 
-	public static boolean[] testSM(List<boolean[]> listOfbloomFilter, List<String> token, int ratePos)
-			throws UnsupportedEncodingException {
-		boolean[] result = new boolean[listOfbloomFilter.size()];
+    byte[] keyOCEnc = new byte[key.length / 3];
+    System.arraycopy(key, 2 * key.length / 3, keyOCEnc, 0, key.length / 3);
 
-		// Fetch first the result of the PRF
-		String prf = token.get(0);
-		int blockSize = 128;
+    // computation of the PRF based on CMAC-AES
+    byte[] cmac = CryptoPrimitives.generateCmac(keyPRF, keywordONE + keywordTWO);
 
-		// For each Bloom filter compute whether or not the element exists
-		int position;
-		boolean mask;
-		for (int i = 0; i < listOfbloomFilter.size(); i++) {
+    token.add(CryptoPrimitives.booleanToString(CryptoPrimitives.bytesToBoolean(cmac)));
 
-			String truncatedTok = "";
-			for (int j = 0; j < ratePos; j++) {
+    int position = 0;
 
-				byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC, j + prf);
+    // False positive rate is the number of hash functions
 
-				// We truncate the needed bits from the output of the HMAC to
-				// get the bit 1 to counter
-				position = CryptoPrimitives.getIntFromByte(hmac,
-						(int) (Math.log(listOfbloomFilter.get(i).length) / Math.log(2)));
+    for (int i = 0; i < falsePosRate; i++) {
+      byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC,
+        i + CryptoPrimitives.booleanToString(CryptoPrimitives.bytesToBoolean(cmac)));
 
-				// Truncated Circular TOKEN
+      // We truncate the needed bits from the output of the HMAC to get
+      // the bit 1 to counter
+      position = CryptoPrimitives.getIntFromByte(hmac, maxLengthOfMask);
 
-				truncatedTok = token.get(j + 1).substring(0,
-						(int) (Math.log(listOfbloomFilter.get(i).length) / Math.log(2)) * blockSize);
+      // Transform the position into an array of boolean []
+      boolean[] messageBol = CryptoPrimitives.intToBoolean(position, maxLengthOfMask);
 
-				byte[] hmac3 = CryptoPrimitives.generateHmac(keyHMAC, i + truncatedTok);
+      boolean[][] results = CryptoPrimitives.onlineCipher(keyOCHash, keyOCEnc, messageBol);
+      boolean[] positionFinal = new boolean[maxLengthOfMask * blockSize];
+      for (int s = 0; s < maxLengthOfMask; s++) {
+        System.arraycopy(results[s], 0, positionFinal, s * blockSize, blockSize);
+      }
 
-				mask = (CryptoPrimitives.getBit(hmac3, 0) != 0);
+      token.add(CryptoPrimitives.booleanToString(positionFinal));
 
-				if (listOfbloomFilter.get(i)[position] ^ mask == true) {
-					result[i] = true;
+    }
+    return token;
 
-				} else {
-					result[i] = false;
-					break;
-				}
-			}
+  }
 
-		}
+  // ***********************************************************************************************//
 
-		return result;
-	}
+  ///////////////////// TestSM without partitioning
+  ///////////////////// /////////////////////////////
+
+  // ***********************************************************************************************//
+
+  public static boolean[] testSM(List<boolean[]> listOfbloomFilter, List<String> token, int ratePos)
+    throws UnsupportedEncodingException {
+    boolean[] result = new boolean[listOfbloomFilter.size()];
+
+    // Fetch first the result of the PRF
+    String prf = token.get(0);
+    int blockSize = 128;
+
+    // For each Bloom filter compute whether or not the element exists
+    int position;
+    boolean mask;
+    for (int i = 0; i < listOfbloomFilter.size(); i++) {
+
+      String truncatedTok = "";
+      for (int j = 0; j < ratePos; j++) {
+
+        byte[] hmac = CryptoPrimitives.generateHmac(keyHMAC, j + prf);
+
+        // We truncate the needed bits from the output of the HMAC to
+        // get the bit 1 to counter
+        position = CryptoPrimitives.getIntFromByte(hmac,
+          (int) (Math.log(listOfbloomFilter.get(i).length) / Math.log(2)));
+
+        // Truncated Circular TOKEN
+
+        truncatedTok = token.get(j + 1).substring(0,
+          (int) (Math.log(listOfbloomFilter.get(i).length) / Math.log(2)) * blockSize);
+
+        byte[] hmac3 = CryptoPrimitives.generateHmac(keyHMAC, i + truncatedTok);
+
+        mask = (CryptoPrimitives.getBit(hmac3, 0) != 0);
+
+        if (listOfbloomFilter.get(i)[position] ^ mask == true) {
+          result[i] = true;
+
+        } else {
+          result[i] = false;
+          break;
+        }
+      }
+
+    }
+
+    return result;
+  }
 
 }

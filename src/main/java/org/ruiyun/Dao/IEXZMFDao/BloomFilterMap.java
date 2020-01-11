@@ -16,20 +16,18 @@ public class BloomFilterMap {
 
   /**
    * 在BloomFilterMap表中添加一条记录
-   * @param numberofbf 布隆过滤文件唯一标识（布隆过滤器的编号）
    * @param position 文件布隆过滤的信息
    * @throws Exception
    */
-  public static void InsertBloomFilterMap(int numberofbf,String position) throws Exception {
+  public static void InsertBloomFilterMap(String position) throws Exception {
     Connection conn = null;
     PreparedStatement ps = null;
     try {
       conn =  IEXZMFDB.getConnection();
       conn.setAutoCommit(false);
       ps = conn
-        .prepareStatement("INSERT INTO BloomFilterMap (numberofbf,position) values(?,?)");
-      ps.setInt(1, numberofbf);
-      ps.setString(2, position);
+        .prepareStatement("INSERT INTO BloomFilterMap (position) values(?)");
+      ps.setString(1, position);
       ps.executeUpdate();
       conn.commit();
     } catch (Exception es) {
@@ -40,6 +38,31 @@ public class BloomFilterMap {
       ps.close();
       conn.close();
     }
+  }
+
+  public static int FindBloomFilterMap(String position) throws Exception {
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    int numberofbf = -1;
+    try {
+      conn =  IEXZMFDB.getConnection();
+      conn.setAutoCommit(false);
+      ps = conn
+        .prepareStatement("SELECT numberofbf FROM BloomFilterMap WHERE position=?");
+      ps.setString(1, position);
+      rs = ps.executeQuery();
+      while(rs.next())
+        numberofbf = rs.getInt("numberofbf");
+    } catch (Exception es) {
+      conn.rollback();
+      throw es;
+    } finally {
+      conn.setAutoCommit(true);
+      ps.close();
+      conn.close();
+    }
+    return numberofbf;
   }
 
   /**
