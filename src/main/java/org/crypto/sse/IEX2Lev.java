@@ -282,10 +282,12 @@ public class IEX2Lev implements Serializable {
 
     Set<String> finalResult = new TreeSet<String>();
     for (int i = 0; i < token.size(); i++) {
-
-      Set<String> result = new HashSet<String>(RR2Lev.query(token.get(i).getTokenMMGlobal(),false));//RR2Lev.query根据MMg查找包含token.get(i)的文件
-
-      if (!(result.size() == 0)) {//如果token中第i个关键词没结果，直接返回
+      Set<String> result = null;
+      if(RR2Lev.query(token.get(i).getTokenMMGlobal(),false)!=null)
+        result = new HashSet<String>(RR2Lev.query(token.get(i).getTokenMMGlobal(),false));//RR2Lev.query根据MMg查找包含token.get(i)的文件
+      else
+        result = new HashSet<String>();
+      if ((result.size()!= 0)) {//如果token中第i个关键词没结果，直接返回
         //	List<Integer> temp = new ArrayList<Integer>(//如果token中第i个关键词有结果，则根据关键词打开对应的字典Dictionary
         //			disj.getDictionaryForMM().get(new String(token.get(i).getTokenDIC())));
 

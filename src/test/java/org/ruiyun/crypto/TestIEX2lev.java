@@ -163,9 +163,9 @@ public class TestIEX2lev {
           if (!(tmpBol.size() == 0)) {//如果第一次输入的关键词没有结果，直接返回
             //	List<Integer> temp = new ArrayList<Integer>(
             //			disj.getDictionaryForMM().get(new String(tokenTMP.get(0).getTokenDIC())));//temp获得tokenTMP第一个关键字的字典编号
-            List<byte[]> newtemp = LocalArray.FindLocalListWord(new String(tokenTMP.get(0).getTokenDIC()));//temp获得tokenTMP第一个关键字的字典编号
+            List<byte[]> newtemp = LocalArray.FindLocalListWord(new String(tokenTMP.get(0).getTokenDIC()));//temp获得tokenTMP第一个关键字的字典
             String keyword = new String(tokenTMP.get(0).getTokenDIC());
-            if (!(newtemp.size() == 0)) {
+            if ((newtemp!= null)) {
               //int pos = temp.get(0);//根据temp的值，确定字典内容位置
 
               for (int j = 0; j < tokenTMP.get(0).getTokenMMLocal().size(); j++) {

@@ -911,7 +911,8 @@ public class RR2Lev implements Serializable {
     byte[] l = CryptoPrimitives.generateCmac(keys[0], Integer.toString(0));
 
     //List<byte[]> tempList = new ArrayList<byte[]>(dictionary.get(new String(l)));
-
+    if(LocalArray.FindLocalListArrayIndex(keyword,new String(l))==null)
+      return null;
     //if (!(tempList.size() == 0)) {
     String temp = (new String(CryptoPrimitives.decryptAES_CTR_String(LocalArray.FindLocalListArrayIndex(keyword,new String(l)), keys[1])))
       .split("\t\t\t")[0];

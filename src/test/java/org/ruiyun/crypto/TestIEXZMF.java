@@ -153,7 +153,9 @@ public class TestIEXZMF{
 
           //List<Integer> bFIDPaddeds = IEXZMF.bloomFilterStart.get(new String(tokenTMP.get(0).getTokenSI1()));
           String tempstartstring = BloomFilterStart.FindBloomFilterStart(new String(tokenTMP.get(0).getTokenSI1()));
-          String[] tempstartlist = tempstartstring.split(",");
+          String[] tempstartlist = null;
+          if(tempstartstring!=null)
+            tempstartlist  = tempstartstring.split(",");
           if (!(tempstartlist == null)) {
             for (int j = 0; j < tempstartlist.length; j++) {
               int bFID = Integer.parseInt(tempstartlist[j]);
