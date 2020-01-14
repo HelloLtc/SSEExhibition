@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import org.ruiyun.Util.IEX2levDB;
+import org.ruiyun.DB.IEX2levDB;
 
 /**
  * 对数据库IEX2lev中LocalArrayIndex表和LocalArrayList表进行增删改查的功能，

@@ -1,13 +1,14 @@
-package org.ruiyun.crypto;
+package org.ruiyun.Util;
 
+
+import org.crypto.sse.*;
+import org.ruiyun.Dao.IEX2levDao.LocalArray;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.crypto.sse.*;
-import org.ruiyun.Dao.IEX2levDao.LocalArray;
 
 
 /**多关键字查询
@@ -17,8 +18,8 @@ import org.ruiyun.Dao.IEX2levDao.LocalArray;
  * @className TestIEX2lev
  * @since 2020/1/10 14:42
  */
-public class TestSearchIEX2lev {
-  public static void main(String[] args) throws Exception {
+public class SearchIEX2lev {
+  public static Set<String> func(String s,String path) throws Exception {
 
     BufferedReader keyRead = new BufferedReader(new InputStreamReader(System.in));
 
@@ -27,24 +28,35 @@ public class TestSearchIEX2lev {
     String pass = "123";//输入密码
 
     List<byte[]> listSK = IEX2Lev.keyGen(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
-
-		while (true) {
     System.out.println("How many disjunctions? ");
-    int numDisjunctions = Integer.parseInt(keyRead.readLine());//输入或查询次数
+    int numDisjunctions = Integer.parseInt("1");//输入或查询次数
+/*
+    System.out.println("Enter the relative path name of the folder that contains the files to make searchable: ");
 
+    String pathName = "D:\\IdeaProjects\\1\\SSEExhibition\\testfile";//输入文件路径
+
+    ArrayList<File> listOfFile = new ArrayList<File>();
+    TextProc.listf(pathName, listOfFile);//文件读取
+
+    TextProc.TextProc(false, pathName);//TextProc初始化时TextExtractPar初始化，lp1(关键词：文件名)，lp2(文件名：关键词)
+    int bigBlock = 2;
+    int smallBlock = 1;//2lev的分包处理参数
+    IEX2Lev.setup(listSK, TextExtractPar.lp1, TextExtractPar.lp2, bigBlock, smallBlock, 0);//IEX初始化
+    System.out.println("IEX2lev添加完成");
+*/
     // Storing the CNF form
     String[][] bool = new String[numDisjunctions][];
     for (int i = 0; i < numDisjunctions; i++) {
       System.out.println("Enter the keywords of the disjunctions ");
-      bool[i] = "hello".split(" ");//输入或查询的关键词组
+      bool[i] = s.split(" ");//输入或查询的关键词组
     }
 
-    test("log-1.txt", "Test", 1, listSK, bool);
-  }
+    Set<String> ss = test("log-1.txt", "Test", 1, listSK, bool);
 
+    return  ss;
 }
 
-  public static void test(String output, String word, int numberIterations, List<byte[]> listSK,
+  public static Set<String> test(String output, String word, int numberIterations, List<byte[]> listSK,
                           String[][] bool) throws Exception {
 
     long minimum = 1000000000;
@@ -121,30 +133,11 @@ public class TestSearchIEX2lev {
       }
 
       System.out.println("Final result " + tmpBol);
-      long endTime3 = System.nanoTime();
-      long totalTime3 = endTime3 - startTime3;
+      return tmpBol;
 
-      if (totalTime3 < minimum) {
-
-        minimum = totalTime3;
-
-      }
-
-      if (totalTime3 > maximum) {
-
-        maximum = totalTime3;
-
-      }
-
-      average = average + totalTime3;
 
     }
 
-    BufferedWriter writer2 = new BufferedWriter(new FileWriter(output, true));
-    writer2.write("\n Word " + word + " minimum " + minimum);
-    writer2.write("\n Word " + word + " maximum " + maximum);
-    writer2.write("\n Word " + word + " average " + average / numberIterations + "\n\n");
-    writer2.close();
-
+  return null;
   }
 }

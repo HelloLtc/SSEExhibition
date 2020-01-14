@@ -3,7 +3,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.ruiyun.Util.IEXZMFDB;
+import org.ruiyun.DB.IEXZMFDB;
 
 /**
  * 对数据库IEXZMF中BloomGlobalArrayIndex表和BloomGlobalArrayList表进行增删改查的功能，

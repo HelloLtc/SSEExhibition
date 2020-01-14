@@ -3,7 +3,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.ruiyun.Util.IEX2levDB;
+import org.ruiyun.DB.IEX2levDB;
 
 /**
  * 对数据库IEX2lev中GlobalArrayIndex表和GlobalArrayList表进行增删改查的功能，

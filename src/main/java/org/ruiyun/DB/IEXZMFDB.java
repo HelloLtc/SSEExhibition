@@ -1,33 +1,32 @@
-package org.ruiyun.Util;
+package org.ruiyun.DB;
 import java.io.InputStream;
 import java.sql.*;
 import java.util.Properties;
-/**建立IEX2lev方案的数据库连接
+/**建立IEXZMF方案的数据库连接
  * @author ltc
- * @className IEX2levDB
- * @since 2020/1/9 20:27
+ * @className IEXZMFDB
+ * @since 2020/1/9 20:40
  */
-public class IEX2levDB {
-  private IEX2levDB(){}
+public class IEXZMFDB {
+  private IEXZMFDB(){}
   private static Connection con;
   public static Connection getConnection(){
     String driver;
     String url;
     String name;
     String password;
-
     try {
-      InputStream is = IEX2levDB.class.getClassLoader().getResourceAsStream("resources/config.properties");
+      InputStream is = IEXZMFDB.class.getClassLoader().getResourceAsStream("resources/config.properties");
       Properties properties = new Properties();
       properties.load(is);
       driver = properties.getProperty("driver");
-      url = properties.getProperty("2levurl");
+      url = properties.getProperty("zmfurl");
       name = properties.getProperty("name");
       password = properties.getProperty("password");
       Class.forName(driver);
       con = DriverManager.getConnection(url, name, password);
     }catch (Exception ep){
-      throw new RuntimeException(ep+"IEX2lev数据库连接失败");
+      throw new RuntimeException(ep+"IEXZMF数据库连接失败");
     }
     return con;
   }

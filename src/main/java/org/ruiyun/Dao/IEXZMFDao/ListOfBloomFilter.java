@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import org.ruiyun.Util.IEXZMFDB;
+import org.ruiyun.DB.IEXZMFDB;
 
 /**
  * 对数据库中ListOfBloomFilter表进行增删改差的功能，
