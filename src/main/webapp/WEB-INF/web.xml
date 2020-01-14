@@ -6,11 +6,20 @@
     <display-name>SSEExhibition</display-name>
     <servlet>
         <servlet-name>IEX2levServlet</servlet-name>
-        <servlet-class>org.ruiyun.Util.IEX2levServlet</servlet-class>
+        <servlet-class>org.ruiyun.Servlet.IEX2levServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>IEX2levServlet</servlet-name>
         <url-pattern>/IEX2levServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>IEXZMFServlet</servlet-name>
+        <servlet-class>org.ruiyun.Servlet.IEXZMFServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>IEXZMFServlet</servlet-name>
+        <url-pattern>/IEXZMFServlet</url-pattern>
     </servlet-mapping>
     <welcome-file-list>
         <welcome-file>main.jsp</welcome-file>

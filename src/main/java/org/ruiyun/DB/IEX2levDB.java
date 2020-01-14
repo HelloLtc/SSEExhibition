@@ -8,17 +8,26 @@ import java.util.Properties;
  * @since 2020/1/9 20:27
  */
 public class IEX2levDB {
-
+  private IEX2levDB(){}
+  private static Connection con;
   public static Connection getConnection(){
-    Connection conn=null;
+    String driver;
+    String url;
+    String name;
+    String password;
     try {
-      Class.forName("com.mysql.jdbc.Driver");
-      conn = DriverManager
-        .getConnection("jdbc:mysql://localhost:3306/iex2lev",
-          "root", "123456");
-    } catch (Exception e) {
-      e.printStackTrace();
+      InputStream is = IEXZMFDB.class.getClassLoader().getResourceAsStream("resources/config.properties");
+      Properties properties = new Properties();
+      properties.load(is);
+      driver = properties.getProperty("driver");
+      url = properties.getProperty("2levurl");
+      name = properties.getProperty("name");
+      password = properties.getProperty("password");
+      Class.forName(driver);
+      con = DriverManager.getConnection(url, name, password);
+    }catch (Exception ep){
+      throw new RuntimeException(ep+"IEXZMF数据库连接失败");
     }
-    return conn;
+    return con;
   }
 }

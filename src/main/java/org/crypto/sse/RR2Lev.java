@@ -559,7 +559,7 @@ public class RR2Lev implements Serializable {
       oldarray=LocalArray.FindLocalListArrayIndex(keyword,new String(oldl));
       //判断word是否存
       if(oldarray!=null){
-        temp =RR2Lev.LocalQuery(keyword,oldtoken, null, null,true);//转换为 Local
+        temp =RR2Lev.LocalQuery(keyword,oldtoken,true);//转换为 Local
       }
 
       counter++;
@@ -905,7 +905,7 @@ public class RR2Lev implements Serializable {
 
   // ***********************************************************************************************//
 
-  public static List<String> LocalQuery(String keyword,byte[][] keys, Multimap<String, byte[]> dictionary, byte[][] array,boolean Dle)
+  public static List<String> LocalQuery(String keyword,byte[][] keys,boolean Dle)
     throws Exception {
 
     byte[] l = CryptoPrimitives.generateCmac(keys[0], Integer.toString(0));

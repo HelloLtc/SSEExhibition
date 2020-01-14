@@ -95,14 +95,12 @@ public class TestSearchIEX2lev {
 
                 Set<String> temporary = new HashSet<String>();
                 List<String> tempoList = RR2Lev.LocalQuery(keyword,tokenTMP.get(0).getTokenMMLocal().get(j),
-                  null,
-                  null,false);//根据tokenTMP首个关键字形成的token串和首个关键字的字典进行查找文档
+                  false);//根据tokenTMP首个关键字形成的token串和首个关键字的字典进行查找文档
 
                 if (!(tempoList == null)) {
                   temporary = new HashSet<String>(
                     RR2Lev.LocalQuery(keyword,tokenTMP.get(0).getTokenMMLocal().get(j),
-                      null,
-                      null,false));
+                      false));
                 }
 
                 finalResult.addAll(temporary);//求并集

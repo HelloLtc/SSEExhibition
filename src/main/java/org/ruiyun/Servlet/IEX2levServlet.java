@@ -1,5 +1,7 @@
-package org.ruiyun.Util;
+package org.ruiyun.Servlet;
 
+
+import org.ruiyun.Util.SearchIEX2lev;
 
 import java.util.*;
 import javax.servlet.http.HttpServlet;
@@ -34,9 +36,9 @@ public class IEX2levServlet extends HttpServlet {
 
   private void SearchIEX2lev(HttpServletRequest request, HttpServletResponse response) throws Exception {
     String pathRoot = getServletContext().getRealPath("/");
-    String s = request.getParameter("search");
+    String s = request.getParameter("levsearch");
     Set<String> ss = SearchIEX2lev.func(s,pathRoot);
-    request.setAttribute("result", ss);
+    request.setAttribute("levResult", ss);
     request.getRequestDispatcher("main.jsp").forward(request,
       response);
   }
