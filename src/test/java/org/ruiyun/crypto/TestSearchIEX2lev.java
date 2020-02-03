@@ -27,7 +27,10 @@ public class TestSearchIEX2lev {
     String pass = "123";//输入密码
 
     List<byte[]> listSK = IEX2Lev.keyGen(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
-
+    String listSK1 = IEX2Lev.keyGenString(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
+    String sss = listSK1;
+    byte[] ss = sss.getBytes("gbk");
+    System.out.println("ss:"+sss.getBytes("gbk").length);
 		while (true) {
     System.out.println("How many disjunctions? ");
     int numDisjunctions = Integer.parseInt(keyRead.readLine());//输入或查询次数
@@ -36,7 +39,7 @@ public class TestSearchIEX2lev {
     String[][] bool = new String[numDisjunctions][];
     for (int i = 0; i < numDisjunctions; i++) {
       System.out.println("Enter the keywords of the disjunctions ");
-      bool[i] = "hello".split(" ");//输入或查询的关键词组
+      bool[i] = keyRead.readLine().split(" ");//输入或查询的关键词组
     }
 
     test("log-1.txt", "Test", 1, listSK, bool);

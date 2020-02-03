@@ -847,6 +847,15 @@ public class CryptoPrimitives {
     }
     return bits;
   }
+
+
+  public static String BytetoString(byte[] bytes) {
+    String bits = "";
+    for (int i = 0; i < bytes.length ; i++) {
+        bits = bits + bytes[i]+",";
+    }
+    return bits;
+  }
   // ***********************************************************************************************//
 
   ///////////////////// byte array concatenation /////////////////////////////
