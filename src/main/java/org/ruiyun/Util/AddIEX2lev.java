@@ -12,16 +12,6 @@ import java.util.List;
 public class AddIEX2lev {
 
   public static void Add(List<byte[]> listSK,String pathName) throws Exception {
-
-    BufferedReader keyRead = new BufferedReader(new InputStreamReader(System.in));
-
-    System.out.println("Enter your password :");
-
-  //  String pass = "123";//输入密码
-
-   // List<byte[]> listSK = IEX2Lev.keyGen(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
-
-
     ArrayList<File> listOfFile = new ArrayList<File>();
 
     TextProc.listf(pathName, listOfFile);//文件读取

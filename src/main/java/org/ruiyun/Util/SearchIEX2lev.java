@@ -20,15 +20,13 @@ import java.util.Set;
  */
 public class SearchIEX2lev {
   public static Set<String> Search(String s,List<byte[]> listSK) throws Exception {
-    System.out.println("Enter your password :");
-   System.out.println("How many disjunctions? ");
-    int numDisjunctions = Integer.parseInt("1");//输入或查询次数
-
+    String[] searchlist = s.split(",");
+    int numDisjunctions = searchlist.length;//输入或查询次数
     // Storing the CNF form
     String[][] bool = new String[numDisjunctions][];
     for (int i = 0; i < numDisjunctions; i++) {
       System.out.println("Enter the keywords of the disjunctions ");
-      bool[i] = s.split(" ");//输入或查询的关键词组
+      bool[i] = searchlist[i].split(" ");//输入或查询的关键词组
     }
     Set<String> ss = test("log-1.txt", "Test", 1, listSK, bool);
     return  ss;

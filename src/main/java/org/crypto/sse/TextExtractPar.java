@@ -141,7 +141,19 @@ public class TextExtractPar implements Serializable {
       futures.add(service.submit(callable));
     }
 
-    service.shutdown();
+
+    try {
+      // 告诉线程池，如果所有任务执行完毕则关闭线程池
+      service.shutdown();
+
+      // 判断线程池是否在限定时间内，或者线程池内线程全部结束
+      if(!service.awaitTermination(3, TimeUnit.SECONDS)){
+        // 超时的时候向线程池中所有的线程发出中断(interrupted)。
+        service.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      System.out.println("awaitTermination interrupted: " + e);
+    }
 
     for (Future<TextExtractPar> future : futures) {
       Set<String> keywordSet1 = future.get().getL1().keySet();
@@ -273,7 +285,7 @@ public class TextExtractPar implements Serializable {
             lines.add(extractor.stripFields(rawText));
           }
 
-          extractor.close();
+          extractor.close();fs.close();
         } catch (IOException e) {
           // TODO Auto-generated catch block
           Printer.debugln("File not read: " + file.getName());

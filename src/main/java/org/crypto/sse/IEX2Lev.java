@@ -184,36 +184,12 @@ public class IEX2Lev implements Serializable {
 
     for (String keyword : lookup.keySet()) {
 
-      // Stats for keeping track with the evaluation
-
-      for (int j = 0; j < 100; j++) {//日志记录
-
-        if (counter == (int) ((j + 1) * lookup.keySet().size() / 100)) {
-          BufferedWriter writer2 = new BufferedWriter(new FileWriter("temp-logs.txt", true));
-          writer2.write("\n Number of local multi-maps created" + j + " %");
-          writer2.close();
-
-          break;
-        }
-      }
 
       // Filter setting optional. For a setup without any filtering set
       // filterParameter to 0
       if (((double) lookup.get(keyword).size() / TextExtractPar.maxTupleSize > filterParameter)) {
 
-        // Stats
-        Printer.debugln("Keyword in LMM " + keyword);
-        BufferedWriter writer3 = new BufferedWriter(new FileWriter("words-logs.txt", true));
-        writer3.write("\n Keyword in LMM " + keyword);
-        writer3.close();
 
-        for (int j = 0; j < 10; j++) {
-
-          if (counter == (int) ((j + 1) * lookup.keySet().size() / 10)) {
-            Printer.statsln("Number of total keywords processed equals " + j + "0 % \n");
-            break;
-          }
-        }
 
         // First computing V_w. Determine Doc identifiers
 

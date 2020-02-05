@@ -33,7 +33,7 @@ public class IEX2levServlet extends HttpServlet {
 
   public void init() throws ServletException {
     Object pathRoot = getServletContext().getRealPath("/");
-    uploadFolder = (String) pathRoot+"testfile\\";
+    uploadFolder = (String) pathRoot+"testfile";
     System.out.println("FileUpload servlet Init(), uploaderFolder: " + uploadFolder);
   }
 

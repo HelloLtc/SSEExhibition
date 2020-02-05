@@ -30,6 +30,16 @@
         <servlet-name>UploadServlet</servlet-name>
         <url-pattern>/UploadServlet</url-pattern>
     </servlet-mapping>
+
+    <servlet>
+        <servlet-name>EliFileServlet</servlet-name>
+        <servlet-class>org.ruiyun.Servlet.EliFileServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EliFileServlet</servlet-name>
+        <url-pattern>/EliFileServlet</url-pattern>
+    </servlet-mapping>
+
     <welcome-file-list>
         <welcome-file>main.jsp</welcome-file>
     </welcome-file-list>

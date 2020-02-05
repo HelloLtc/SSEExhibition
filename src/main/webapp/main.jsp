@@ -15,10 +15,11 @@
     $(document).ready(function () {
         let plainFiles = null;
         let btnUploadPlain = $('#btn-upload-file');
-        let btnEncryptPlain = $('#btn-encrypt-file');
+        let btnLevEncrypt = $('#btn-levencrypt-file');
+        let btnZmfEncrypt = $('#btn-zmfencrypt-file');
         let btnEliminatePlain = $('#btn-eliminate-file');
-        let btnSearchPlain = $('#btn-search-file');
-
+        let btnLevSearch = $('#btn-levsearch-file');
+        let btnZMFSearch = $('#btn-zmfsearch-file');
 
         $('#input-file').change(function () {
             plainFiles = this.files;
@@ -44,7 +45,7 @@
                 processData: false,
                 data: formData,
                 success: function (data) {
-                    if (data.status === true) {
+                    if (data.status == true) {
                         alert(`文件: ${data.fList}上传成功.`);
                     } else {
                         alert('文件上传失败: ' + data.msg);
@@ -60,7 +61,7 @@
             })
         });
 
-        $(btnEncryptPlain).on('click', function (){
+        $(btnLevEncrypt).on('click', function (){
             let listSk0 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
             let listSk1 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
             $.ajax({
@@ -72,20 +73,38 @@
                 },
                 success: function (data) {
                     if (data.status === true) {
-                        alert(`文件加密成功`);
+                        alert('文件加密成功');
                     } else {
-                        alert('文件加密失败');
+                        alert('文件加密失败1');
                     }
                 },
                 fail: function (err) {
-                    alert('文件上传失败 ');
+                    alert('文件加密失败 ');
                 }
             })
-        });
+        })
 
+        $(btnEliminatePlain).on('click', function (){
+            $.ajax({
+                url: './EliFileServlet',
+                type: 'POST', //GET
+                async: true,    //或false,是否异步
+                data: {
+                    //想要传输过去的数据 key：value，另一个页面通过 key接收value的值
+                },
+                timeout: 5000,    //超时时间
+                dataType: 'text',    //返回的数据格式：json/xml/html/script/jsonp/text
+                success:function(data){//data是成功后，接收的返回值
+                    if (data.status == true) {
+                        alert(data+'文件删除成功');
+                    } else {
+                        alert(data+'文件删除失败1');
+                    }
+                }
+            })
+        })
 
-        $(btnSearchPlain).on('click', function (){
-            alert("123");
+        $(btnLevSearch).on('click', function (){
             var val = document.login.levsearch.value;
             let listSk0 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
             let listSk1 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
@@ -95,6 +114,43 @@
                 async: true,    //或false,是否异步
                 data: {
                     method:'search',listSK0:listSk0,listSK1:listSk1,search:val//想要传输过去的数据 key：value，另一个页面通过 key接收value的值
+                },
+                timeout: 5000,    //超时时间
+                dataType: 'text',    //返回的数据格式：json/xml/html/script/jsonp/text
+                success:function(data){//data是成功后，接收的返回值
+                    alert(data);
+                }
+            })
+        })
+
+        $(btnZMFSearch).on('click', function (){
+            var val = document.login.zmfsearch.value;
+            let listSk0 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
+            let listSk1 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
+            $.ajax({
+                url: './IEXZMFServlet',
+                type: 'POST', //GET
+                async: true,    //或false,是否异步
+                data: {
+                    method:'search',listSK0:listSk0,listSK1:listSk1,zmfsearch:val//想要传输过去的数据 key：value，另一个页面通过 key接收value的值
+                },
+                timeout: 5000,    //超时时间
+                dataType: 'text',    //返回的数据格式：json/xml/html/script/jsonp/text
+                success:function(data){//data是成功后，接收的返回值
+                    alert(data);
+                }
+            })
+        })
+
+        $(btnZmfEncrypt).on('click', function (){
+            let listSk0 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
+            let listSk1 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
+            $.ajax({
+                url: './IEXZMFServlet',
+                type: 'POST', //GET
+                async: true,    //或false,是否异步
+                data: {
+                    method:'add',listSK0:listSk0,listSK1:listSk1//想要传输过去的数据 key：value，另一个页面通过 key接收value的值
                 },
                 timeout: 5000,    //超时时间
                 dataType: 'text',    //返回的数据格式：json/xml/html/script/jsonp/text
@@ -125,12 +181,19 @@
                 <td>IEX2lev查询条件:</td>
                 <td><input name="levsearch" type="text"/></td>
             </tr>
+            <tr>
+                <td>IEXZMF查询条件:</td>
+                <td><input name="zmfsearch" type="text"/></td>
+            </tr>
 
             <br>
             <br>
         </table>
         <div class="input-group-prepend">
-            <button id="btn-search-file">查询</button>
+            <button id="btn-levsearch-file">IEX2lev查询</button>
+        </div>
+        <div class="input-group-prepend">
+            <button id="btn-zmfsearch-file">ZMF2lev查询</button>
         </div>
     </form>
 
@@ -140,7 +203,11 @@
         </button>
     </div>
     <div class="input-group-prepend">
-        <button id="btn-encrypt-file">加密
+        <button id="btn-levencrypt-file">IEX2lev加密
+        </button>
+    </div>
+    <div class="input-group-prepend">
+        <button id="btn-zmfencrypt-file">ZMF2lev加密
         </button>
     </div>
     <div class="input-group-prepend">
