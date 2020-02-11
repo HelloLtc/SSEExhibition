@@ -73,7 +73,10 @@ public class IEX2levServlet extends HttpServlet {
     listSK.add(list0);
     listSK.add(list1);
     Set<String> ss = SearchIEX2lev.Search(s,listSK);
-    out.println(new Gson().toJson(ss));
+    String reslist = "";
+    for (String i : ss)
+      reslist = reslist + i+" ";
+    out.println(new Gson().toJson(new IEX2levStatus(reslist,true)));
     out.flush();
   }
 

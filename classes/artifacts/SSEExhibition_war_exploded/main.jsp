@@ -20,7 +20,6 @@
         let btnEliminatePlain = $('#btn-eliminate-file');
         let btnLevSearch = $('#btn-levsearch-file');
         let btnZMFSearch = $('#btn-zmfsearch-file');
-
         $('#input-file').change(function () {
             plainFiles = this.files;
             console.log("input plainFile change.");
@@ -45,7 +44,7 @@
                 processData: false,
                 data: formData,
                 success: function (data) {
-                    if (data.status == true) {
+                    if (data.status === true) {
                         alert(`文件: ${data.fList}上传成功.`);
                     } else {
                         alert('文件上传失败: ' + data.msg);
@@ -62,27 +61,47 @@
         });
 
         $(btnLevEncrypt).on('click', function (){
-            let listSk0 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
-            let listSk1 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
+            let val = document.login.genkey.value;
+            if(val === null||val=== ""){
+                alert("请输入密码");
+                return 0;
+            }
+            $.ajax({
+                url: './GenKeyServlet',
+                method: 'POST',
+                async: false,    //或false,是否异步
+                data: {
+                    genkey:val
+                },
+                success: function (data) {
+                    SK0 = data.key0;
+                    SK1 = data.key1;
+                },
+                fail: function (err) {
+                    alert('密钥生成失败 ');
+                }
+            });
             $.ajax({
                 url: './IEX2levServlet',
                 method: 'POST',
                 async: true,    //或false,是否异步
                 data: {
-                    method:'add',listSK0:listSk0,listSK1:listSk1
+                    method:'add',listSK0:SK0,listSK1:SK1
                 },
+                timeout: 5000,    //超时时间
+                dataType: 'json',    //返回的数据格式：json/xml/html/script/jsonp/text
                 success: function (data) {
                     if (data.status === true) {
                         alert('文件加密成功');
                     } else {
-                        alert('文件加密失败1');
+                        alert('文件加密失败');
                     }
                 },
                 fail: function (err) {
                     alert('文件加密失败 ');
                 }
             })
-        })
+        });
 
         $(btnEliminatePlain).on('click', function (){
             $.ajax({
@@ -93,69 +112,144 @@
                     //想要传输过去的数据 key：value，另一个页面通过 key接收value的值
                 },
                 timeout: 5000,    //超时时间
-                dataType: 'text',    //返回的数据格式：json/xml/html/script/jsonp/text
+                dataType: 'json',    //返回的数据格式：json/xml/html/script/jsonp/text
                 success:function(data){//data是成功后，接收的返回值
-                    if (data.status == true) {
-                        alert(data+'文件删除成功');
+                    if (data.filestatus === true) {
+                        alert(data.filestatus+'文件删除成功');
                     } else {
-                        alert(data+'文件删除失败1');
+                        alert(data.filestatus+'文件删除失败');
                     }
                 }
             })
-        })
+        });
 
         $(btnLevSearch).on('click', function (){
-            var val = document.login.levsearch.value;
-            let listSk0 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
-            let listSk1 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
+            let val = document.login.genkey.value;
+            let levval = document.login.levsearch.value;
+            if(val === null||val=== ""){
+                alert("请输入密码");
+                return 0;
+            }
+            if(levval === null||levval === ""){
+                alert("请输入查询条件");
+                return 0;
+            }
+            $.ajax({
+                url: './GenKeyServlet',
+                method: 'POST',
+                async: false,    //或false,是否异步
+                data: {
+                    genkey:val
+                },
+                success: function (data) {
+                    SK0 = data.key0;
+                    SK1 = data.key1;
+                },
+                fail: function (err) {
+                    alert('密钥生成失败 ');
+                }
+            });
             $.ajax({
                 url: './IEX2levServlet',
                 type: 'POST', //GET
-                async: true,    //或false,是否异步
+                async: false,    //或false,是否异步
                 data: {
-                    method:'search',listSK0:listSk0,listSK1:listSk1,search:val//想要传输过去的数据 key：value，另一个页面通过 key接收value的值
+                    method:'search',listSK0:SK0,listSK1:SK1,search:levval//想要传输过去的数据 key：value，另一个页面通过 key接收value的值
                 },
                 timeout: 5000,    //超时时间
-                dataType: 'text',    //返回的数据格式：json/xml/html/script/jsonp/text
+                dataType: 'json',    //返回的数据格式：json/xml/html/script/jsonp/text
                 success:function(data){//data是成功后，接收的返回值
-                    alert(data);
+                    if(data.status === true)
+                        alert("查询结果："+data.msg);
+                    else
+                        alert("无结果");
                 }
             })
-        })
+        });
 
         $(btnZMFSearch).on('click', function (){
-            var val = document.login.zmfsearch.value;
-            let listSk0 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
-            let listSk1 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
+
+            let val = document.login.genkey.value;
+            if(val === null||val=== ""){
+                alert("请输入密码");
+                return 0;
+            }
+            let zmfval = document.login.zmfsearch.value;
+            if(zmfval === null||zmfval === ""){
+                alert("请输入查询条件");
+                return 0;
+            }
+            $.ajax({
+                url: './GenKeyServlet',
+                method: 'POST',
+                async: false,    //或false,是否异步
+                data: {
+                    genkey:val
+                },
+                success: function (data) {
+                    SK0 = data.key0;
+                    SK1 = data.key1;
+                },
+                fail: function (err) {
+                    alert('密钥生成失败 ');
+                }
+            });
             $.ajax({
                 url: './IEXZMFServlet',
                 type: 'POST', //GET
-                async: true,    //或false,是否异步
+                async: false,    //或false,是否异步
                 data: {
-                    method:'search',listSK0:listSk0,listSK1:listSk1,zmfsearch:val//想要传输过去的数据 key：value，另一个页面通过 key接收value的值
+                    method: 'search', listSK0: SK0, listSK1: SK1, zmfsearch: zmfval//想要传输过去的数据 key：value，另一个页面通过 key接收value的值
                 },
                 timeout: 5000,    //超时时间
-                dataType: 'text',    //返回的数据格式：json/xml/html/script/jsonp/text
-                success:function(data){//data是成功后，接收的返回值
-                    alert(data);
+                dataType: 'json',    //返回的数据格式：json/xml/html/script/jsonp/text
+                success: function (data) {//data是成功后，接收的返回值
+                    if (data.zmfstatus === true)
+                        alert("查询结果："+data.msg);
+                    else
+                        alert("无结果");
+                },
+                fail: function (err) {
+                    alert('查找失败 ');
                 }
-            })
-        })
+            });
+        });
 
         $(btnZmfEncrypt).on('click', function (){
-            let listSk0 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
-            let listSk1 = '<%=IEX2Lev.keyGenString(256, "123", "salt/saltSetM", 100000)%>';
+            let val = document.login.genkey.value;
+            if(val === null||val=== ""){
+                alert("请输入密码");
+                return 0;
+            }
+            $.ajax({
+                url: './GenKeyServlet',
+                method: 'POST',
+                async: false,    //或false,是否异步
+                data: {
+                    genkey:val
+                },
+                success: function (data) {
+                    SK0 = data.key0;
+                    SK1 = data.key1;
+                },
+                fail: function (err) {
+                    alert('密钥生成失败 ');
+                }
+            });
             $.ajax({
                 url: './IEXZMFServlet',
                 type: 'POST', //GET
                 async: true,    //或false,是否异步
                 data: {
-                    method:'add',listSK0:listSk0,listSK1:listSk1//想要传输过去的数据 key：value，另一个页面通过 key接收value的值
+                    method:'add',listSK0:SK0,listSK1:SK1//想要传输过去的数据 key：value，另一个页面通过 key接收value的值
                 },
                 timeout: 5000,    //超时时间
-                dataType: 'text',    //返回的数据格式：json/xml/html/script/jsonp/text
+                dataType: 'json',    //返回的数据格式：json/xml/html/script/jsonp/text
                 success:function(data){//data是成功后，接收的返回值
-                    alert(data);
+                    if(data.status === true)
+                        alert("ZMF加密成功");
+                    else
+                        alert("ZMF加密失败");
                 }
             })
         })
@@ -224,4 +318,3 @@
 </div>
 </body>
 </html>
-

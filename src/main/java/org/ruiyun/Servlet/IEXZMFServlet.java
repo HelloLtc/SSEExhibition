@@ -23,10 +23,10 @@ import java.util.Set;
  */
 class IEX2levZMF{
   private String msg;
-  private boolean status;
-  public IEX2levZMF(String msg,boolean status){
+  private boolean zmfstatus;
+  public IEX2levZMF(String msg,boolean zmfstatus){
     this.msg = msg;
-    this.status = status;
+    this.zmfstatus = zmfstatus;
   }
 }
 

@@ -5,6 +5,15 @@
          version="4.0">
     <display-name>SSEExhibition</display-name>
     <servlet>
+        <servlet-name>GenKeyServlet</servlet-name>
+        <servlet-class>org.ruiyun.Servlet.GenKeyServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>GenKeyServlet</servlet-name>
+        <url-pattern>/GenKeyServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
         <servlet-name>IEX2levServlet</servlet-name>
         <servlet-class>org.ruiyun.Servlet.IEX2levServlet</servlet-class>
     </servlet>

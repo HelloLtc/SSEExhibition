@@ -12,10 +12,10 @@ import java.io.PrintWriter;
 
 class EliFileStatus{
   private String msg;
-  private Boolean status;
-  public EliFileStatus(String msg,boolean status){
+  private Boolean filestatus;
+  public EliFileStatus(String msg,boolean filestatus){
     this.msg = msg;
-    this.status = status;
+    this.filestatus = filestatus;
   }
 }
 
