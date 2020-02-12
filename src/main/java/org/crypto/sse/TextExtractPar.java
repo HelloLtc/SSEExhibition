@@ -41,6 +41,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.pdfbox.cos.COSDocument;
+import org.apache.pdfbox.io.RandomAccessBuffer;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.apache.pdfbox.io.RandomAccessRead;
 import org.apache.pdfbox.pdfparser.PDFParser;
@@ -300,8 +301,42 @@ public class TextExtractPar implements Serializable {
       // ***********************************************************************************************//
 
       else if (file.getName().endsWith(".pdf")) {
-
-
+        String result = null;
+        FileInputStream is = null;
+        PDDocument document = null;
+        try {
+          is = new FileInputStream(file.getPath());
+          PDFParser parser = new PDFParser(new RandomAccessBuffer(is));
+          parser.parse();
+          document = parser.getPDDocument();
+          PDFTextStripper stripper = new PDFTextStripper();
+          result = stripper.getText(document);
+        } catch (FileNotFoundException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } catch (IOException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } finally {
+          if (is != null) {
+            try {
+              is.close();
+            } catch (IOException e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+            }
+          }
+          if (document != null) {
+            try {
+              document.close();
+            } catch (IOException e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+            }
+          }
+        }
+        lines.add(result);
+/*
         try {
           PDFParser parser;
           RandomAccessRead randomAccessRead = new RandomAccessBufferedFileInputStream(file);
@@ -310,14 +345,13 @@ public class TextExtractPar implements Serializable {
           COSDocument cd = parser.getDocument();
           PDFTextStripper stripper = new PDFTextStripper();
           lines.add(stripper.getText(new PDDocument(cd)));
-
-          cd.close();
           randomAccessRead.close();
+          cd.close();
         } catch (IOException e) {
           // TODO Auto-generated catch block
           Printer.debugln("File not read: " + file.getName());
         }
-
+*/
       }
 
       // ***********************************************************************************************//

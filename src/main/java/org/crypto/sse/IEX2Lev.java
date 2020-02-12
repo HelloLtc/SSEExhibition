@@ -58,6 +58,8 @@ public class IEX2Lev implements Serializable {
     this.dictionaryForMM = dictionaryForMM;
   }
 
+
+
   public RR2Lev getGlobalMM() {
     return globalMM;
   }
@@ -103,6 +105,25 @@ public class IEX2Lev implements Serializable {
     return listOfkeys;
 
   }
+
+  public static ArrayList<String> keyGenList(int keySize, String password, String filePathString, int icount)
+    throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, UnsupportedEncodingException {
+
+    ArrayList<String> listOfkeys = new ArrayList<String>();
+    List<byte[]> bytekey = keyGen(keySize, password, filePathString, icount);
+    System.out.println("bytekey:"+bytekey.get(0).length);
+    try {
+      listOfkeys.add(new String( bytekey.get(0), "iso-8859-1" ));
+      listOfkeys.add(new String( bytekey.get(1), "iso-8859-1" ));
+      listOfkeys.add(new String( bytekey.get(2), "iso-8859-1" ));
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+    }
+    System.out.println("listOfkeys:"+listOfkeys.get(0).getBytes("iso-8859-1" ).length);
+    return listOfkeys;
+
+  }
+
   public static String keyGenString(int keySize, String password, String filePathString, int icount)
     throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, UnsupportedEncodingException {
 
@@ -306,4 +327,8 @@ public class IEX2Lev implements Serializable {
     //}
     return finalResult;
   }
+
+
+
+
 }
