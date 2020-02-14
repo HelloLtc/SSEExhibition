@@ -46,7 +46,7 @@ public class GenKeyServlet  extends HttpServlet {
     PrintWriter out = response.getWriter();
     String pass = request.getParameter("genkey"); System.out.println("listSK "+pass);
     //  List<String> listSK = IEX2Lev.keyGenList(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
-    String listSK = IEX2Lev.keyGenString(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
+    String listSK = IEX2Lev.keyGenString(128, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
     System.out.println("listSK "+listSK);
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");

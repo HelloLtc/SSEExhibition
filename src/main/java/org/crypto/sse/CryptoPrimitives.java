@@ -27,6 +27,7 @@ package org.crypto.sse;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.digests.SHA512Digest;
 import org.bouncycastle.crypto.engines.AESFastEngine;
+import org.bouncycastle.crypto.engines.SM4Engine;
 import org.bouncycastle.crypto.macs.CMac;
 import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -67,7 +68,7 @@ public class CryptoPrimitives {
     SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
     KeySpec spec = new PBEKeySpec(pass.toCharArray(), salt, icount, keySize);
     SecretKey tmp = factory.generateSecret(spec);
-    SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+    SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "SM4");
     return secret.getEncoded();
 
   }
@@ -79,7 +80,7 @@ public class CryptoPrimitives {
   // ***********************************************************************************************//
 
   public static byte[] generateCmac(byte[] key, String msg) throws UnsupportedEncodingException {
-    CMac cmac = new CMac(new AESFastEngine());
+    CMac cmac = new CMac(new SM4Engine());
     byte[] data = msg.getBytes("UTF-8");
     byte[] output = new byte[cmac.getMacSize()];
 
@@ -240,8 +241,8 @@ public class CryptoPrimitives {
     byte[] input = concat(identifier.getBytes(), new byte[sizeOfFileName - identifier.getBytes().length]);//concat连接两个数组，这里进行了填充
 
     IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-    Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding", "BC");
+    SecretKeySpec key = new SecretKeySpec(keyBytes, "SM4");
+    Cipher cipher = Cipher.getInstance("SM4/CTR/NoPadding", "BC");
     cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
     ByteArrayInputStream bIn = new ByteArrayInputStream(input);
     CipherInputStream cIn = new CipherInputStream(bIn, cipher);
@@ -278,8 +279,8 @@ public class CryptoPrimitives {
     NoSuchProviderException, NoSuchPaddingException, IOException {
 
     IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding", "BC");
+    SecretKeySpec key = new SecretKeySpec(keyBytes, "SM4");
+    Cipher cipher = Cipher.getInstance("SM4/CBC/PKCS7Padding", "BC");
     cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
     ByteArrayInputStream bIn = new ByteArrayInputStream(input);
     CipherInputStream cIn = new CipherInputStream(bIn, cipher);
@@ -316,8 +317,8 @@ public class CryptoPrimitives {
     System.arraycopy(input, ivBytes.length, cipherText, 0, cipherText.length);
 
     IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-    Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding", "BC");
+    SecretKeySpec key = new SecretKeySpec(keyBytes, "SM4");
+    Cipher cipher = Cipher.getInstance("SM4/CBC/NoPadding", "BC");
 
 
     // Initalization of the Cipher
@@ -351,8 +352,8 @@ public class CryptoPrimitives {
     System.arraycopy(input, ivBytes.length, cipherText, 0, cipherText.length);
 
     IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-    Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding", "BC");
+    SecretKeySpec key = new SecretKeySpec(keyBytes, "SM4");
+    Cipher cipher = Cipher.getInstance("SM4/CTR/NoPadding", "BC");
 
     // Initalization of the Cipher
     cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
@@ -388,8 +389,8 @@ public class CryptoPrimitives {
     byte[] ivBytes = CryptoPrimitives.generateCmac(PRFKeyBytes, identifier);
 
     IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    SecretKeySpec key = new SecretKeySpec(encKeyBytes, "AES");
-    Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding", "BC");
+    SecretKeySpec key = new SecretKeySpec(encKeyBytes, "SM4");
+    Cipher cipher = Cipher.getInstance("SM4/CTR/NoPadding", "BC");
     cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
     ByteArrayInputStream bIn = new ByteArrayInputStream(input);
     CipherInputStream cIn = new CipherInputStream(bIn, cipher);
@@ -431,8 +432,8 @@ public class CryptoPrimitives {
 
     byte[] input = concat(input1, input0);
     IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-    Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding", "BC");
+    SecretKeySpec key = new SecretKeySpec(keyBytes, "SM4");
+    Cipher cipher = Cipher.getInstance("SM4/CTR/NoPadding", "BC");
     cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
     ByteArrayInputStream bIn = new ByteArrayInputStream(input);
     CipherInputStream cIn = new CipherInputStream(bIn, cipher);
@@ -479,8 +480,8 @@ public class CryptoPrimitives {
 
     byte[] input = concat(input1, input0);
     IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-    Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding", "BC");
+    SecretKeySpec key = new SecretKeySpec(keyBytes, "SM4");
+    Cipher cipher = Cipher.getInstance("SM4/CTR/NoPadding", "BC");
     cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
     ByteArrayInputStream bIn = new ByteArrayInputStream(input);
     CipherInputStream cIn = new CipherInputStream(bIn, cipher);
@@ -516,8 +517,8 @@ public class CryptoPrimitives {
     System.arraycopy(input, ivBytes.length, cipherText, 0, cipherText.length);
 
     IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-    Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding", "BC");
+    SecretKeySpec key = new SecretKeySpec(keyBytes, "SM4");
+    Cipher cipher = Cipher.getInstance("SM4/CTR/NoPadding", "BC");
 
     // Initalization of the Cipher
     cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
@@ -575,9 +576,9 @@ public class CryptoPrimitives {
       }
     }
 
-    SecretKeySpec key = new SecretKeySpec(keyEnc, "AES");
+    SecretKeySpec key = new SecretKeySpec(keyEnc, "SM4");
 
-    Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding", "BC");
+    Cipher cipher = Cipher.getInstance("SM4/ECB/NoPadding", "BC");
 
     cipher.init(Cipher.ENCRYPT_MODE, key);
     for (int i = 0; i < plaintext.length; i++) {
@@ -852,7 +853,7 @@ public class CryptoPrimitives {
   public static String BytetoString(byte[] bytes) {
     String bits = "";
     for (int i = 0; i < bytes.length ; i++) {
-        bits = bits + bytes[i]+",";
+      bits = bits + bytes[i]+",";
     }
     return bits;
   }

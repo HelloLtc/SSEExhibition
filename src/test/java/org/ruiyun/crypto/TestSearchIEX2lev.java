@@ -26,8 +26,8 @@ public class TestSearchIEX2lev {
 
     String pass = "123";//输入密码
 
-    List<byte[]> listSK = IEX2Lev.keyGen(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
-    String listSK1 = IEX2Lev.keyGenString(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
+    List<byte[]> listSK = IEX2Lev.keyGen(128, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
+    String listSK1 = IEX2Lev.keyGenString(128, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
     String sss = listSK1;
     byte[] ss = sss.getBytes("gbk");
     System.out.println("ss:"+sss.getBytes("gbk").length);

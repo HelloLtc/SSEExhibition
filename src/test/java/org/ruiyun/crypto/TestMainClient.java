@@ -45,7 +45,7 @@ public class TestMainClient extends JFrame implements ActionListener {
       }
       ArrayList<String> listSK = null;
       try {
-        listSK = IEX2Lev.keyGenList(256, pwd, "salt/saltSetM", 100000);
+        listSK = IEX2Lev.keyGenList(128, pwd, "salt/saltSetM", 100000);
       } catch (InvalidKeySpecException ex) {
         ex.printStackTrace();
       } catch (NoSuchAlgorithmException ex) {
