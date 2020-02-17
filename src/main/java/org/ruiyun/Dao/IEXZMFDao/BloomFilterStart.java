@@ -82,7 +82,7 @@ public class BloomFilterStart {
     try {
       conn = IEXZMFDB.getConnection();
       ps = conn
-        .prepareStatement("truncate  table BloomFilterStart");
+        .prepareStatement("truncate  table BloomFilterStart ");
       ps.executeUpdate();
     } catch (Exception es) {
       throw es;
@@ -92,4 +92,21 @@ public class BloomFilterStart {
     }
   }
 
+  public static void UpdateBloomFilterStart(String keyword, String numberofbflist) throws SQLException {
+    Connection conn = null;
+    PreparedStatement ps = null;
+    try {
+      conn = IEXZMFDB.getConnection();
+      ps = conn
+        .prepareStatement("update BloomFilterStart set numberofbflist=? where keyword=?");
+      ps.setString(1, numberofbflist);
+      ps.setString(2, keyword);
+      ps.executeUpdate();
+    } catch (Exception es) {
+      throw es;
+    } finally {
+      ps.close();
+      conn.close();
+    }
+  }
 }

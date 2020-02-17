@@ -2,6 +2,8 @@ package org.ruiyun.crypto;
 
 import org.crypto.sse.IEX2Lev;
 import org.ruiyun.JavaSwingServer.SM2Utils;
+import org.ruiyun.JavaSwingServer.SM3Utils;
+import org.ruiyun.JavaSwingServer.SM4Utils;
 import org.ruiyun.JavaSwingServer.Util;
 
 import javax.swing.*;
@@ -32,7 +34,6 @@ public class TestMainClient extends JFrame implements ActionListener {
   }
   @Override
   public void actionPerformed(ActionEvent e) {
-
     if(e.getSource()==this.jb1)
     {
       this.jl3.setText("正 在 查 询 ， 请 稍 候. . . . .");
@@ -102,20 +103,20 @@ public class TestMainClient extends JFrame implements ActionListener {
           chooser.setFileFilter(filter);
           int returnVal = chooser.showOpenDialog(jb1);
           if (returnVal == JFileChooser.APPROVE_OPTION) {
-            /** 得到选择的文件* */
+            /** 得到选择的文件 **/
             File[] arrfiles = chooser.getSelectedFiles();
-            if (arrfiles == null) {//|| arrfiles.length == 0
+            if (arrfiles == null|| arrfiles.length == 0) {//
               return;
             }
-
             try {
               dos = new DataOutputStream(socket.getOutputStream());
               dos.write(arrfiles.length);
               dos.flush();
               for(int i=0;i<arrfiles.length;i++){
-                dos.writeUTF(dealName(arrfiles[i].getPath()));
+                dos.writeUTF(dealName(arrfiles[i].getPath()) + "#" + SM3Utils.encrypt(dealName(arrfiles[i].getPath())));
                 dos.flush();
                 dos.writeLong(arrfiles[i].length());
+                dos.flush();
               }
               for(int j=0;j<arrfiles.length;j++) {
                 fis = new FileInputStream(arrfiles[j].getPath());
@@ -135,7 +136,6 @@ public class TestMainClient extends JFrame implements ActionListener {
                 dos.flush();
                 fis.close();
               }
-
               System.out.println("文件上传成功！");
               //关闭相应的流
               dos.close();

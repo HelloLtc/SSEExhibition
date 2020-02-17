@@ -120,8 +120,10 @@ public class Handler implements Runnable{
     List<File> FileList = new ArrayList<File>();
     List<Long> FileLength = new ArrayList<Long>();
     for(int i=0;i<FileNum;i++) {
-      String name = dis.readUTF();
-      FileList.add(new File(".\\testfile\\" + name));
+      String namehash = dis.readUTF();
+      String filehash = namehash.split("#")[1];
+      System.out.println("filehash"+filehash);
+      FileList.add(new File(".\\testfile\\" + namehash.split("#")[0]));
       FileLength.add(dis.readLong());
     }
       //创建一个output流用于保存文件

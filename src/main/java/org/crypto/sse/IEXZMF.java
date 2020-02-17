@@ -327,13 +327,13 @@ public class IEXZMF implements Serializable {
         int newnumberOfBF = BloomFilterMap.FindBloomFilterMap(CryptoPrimitives.booleanToString(secureSetM2.get(id)));
         tempstart = tempstart + newnumberOfBF +",";
         BloomFilterID.InsertBloomFilterID(newnumberOfBF, id);
-
-
         Printer.debugln("Matryoshka filter number: " + newnumberOfBF);
-
-
       }
-      BloomFilterStart.InsertBloomFilterStart(new String(TSet.token(keyInvInd, keyword)), tempstart);
+      String list = BloomFilterStart.FindBloomFilterStart(new String(TSet.token(keyInvInd, keyword)));
+      if(list==null)
+        BloomFilterStart.InsertBloomFilterStart(new String(TSet.token(keyInvInd, keyword)), tempstart);
+      else
+        BloomFilterStart.UpdateBloomFilterStart(new String(TSet.token(keyInvInd, keyword)), list+tempstart);
     }
     numberOfkeywordsProcessed++;
 
@@ -404,8 +404,21 @@ public class IEXZMF implements Serializable {
         dictionary.putAll(k, future.get().get(k));
         List<byte[]> tempList = new ArrayList<byte[]>(dictionary.get(k));
         //	System.out.print("(1)tempList "+tempList.size());
-        BloomGlobalArray.InsertGlobalArrayIndex(k, tempList.get(0));
-
+        byte[] bytelist = BloomGlobalArray.FindGlobalListArrayIndex(k);
+        if(bytelist == null)
+          BloomGlobalArray.InsertGlobalArrayIndex(k, tempList.get(0));
+        else {
+          int oldsize = bytelist.length;
+          int addsize = tempList.get(0).length;
+          byte[] newlist = new byte[oldsize+addsize];
+          for(int i = 0;i<oldsize;i++){
+            newlist[i]=  bytelist[i];
+          }
+          for(int i = 0;i<addsize;i++){
+            newlist[i+oldsize]=  tempList.get(0)[i];
+          }
+          BloomGlobalArray.UpdateGlobalArrayIndex(k,newlist);
+        }
       }
 
     }
