@@ -4,6 +4,7 @@ package org.ruiyun.Util;
 import org.crypto.sse.*;
 import org.ruiyun.Dao.IEX2levDao.LocalArray;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -18,31 +19,14 @@ import java.util.Set;
  * @since 2020/1/10 14:42
  */
 public class SearchIEX2lev {
-  public static Set<String> func(String s,String path) throws Exception {
-    System.out.println("Enter your password :");
-    String pass = "123";//输入密码
-    List<byte[]> listSK = IEX2Lev.keyGen(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
-    System.out.println("How many disjunctions? ");
-    int numDisjunctions = Integer.parseInt("1");//输入或查询次数
-/*
-    System.out.println("Enter the relative path name of the folder that contains the files to make searchable: ");
-
-    String pathName = "D:\\IdeaProjects\\1\\SSEExhibition\\testfile";//输入文件路径
-
-    ArrayList<File> listOfFile = new ArrayList<File>();
-    TextProc.listf(pathName, listOfFile);//文件读取
-
-    TextProc.TextProc(false, pathName);//TextProc初始化时TextExtractPar初始化，lp1(关键词：文件名)，lp2(文件名：关键词)
-    int bigBlock = 2;
-    int smallBlock = 1;//2lev的分包处理参数
-    IEX2Lev.setup(listSK, TextExtractPar.lp1, TextExtractPar.lp2, bigBlock, smallBlock, 0);//IEX初始化
-    System.out.println("IEX2lev添加完成");
-*/
+  public static Set<String> Search(String s,List<byte[]> listSK) throws Exception {
+    String[] searchlist = s.split(",");
+    int numDisjunctions = searchlist.length;//输入或查询次数
     // Storing the CNF form
     String[][] bool = new String[numDisjunctions][];
     for (int i = 0; i < numDisjunctions; i++) {
       System.out.println("Enter the keywords of the disjunctions ");
-      bool[i] = s.split(" ");//输入或查询的关键词组
+      bool[i] = searchlist[i].split(" ");//输入或查询的关键词组
     }
     Set<String> ss = test("log-1.txt", "Test", 1, listSK, bool);
     return  ss;

@@ -18,10 +18,10 @@ import java.util.Map;
 public class SearchIEXZMF {
   private static final int falsePosRate = 25;
   private static final int maxLengthOfMask = 20;
-  public static List<String> Search(String items) throws Exception {
-    System.out.println("Enter your password :");
-    String pass = "123";
-    List<byte[]> listSK = IEXZMF.keyGen(128, pass, "salt/saltInvIX", 100);
+  public static List<String> Search(List<byte[]> listSK,String items) throws Exception {
+
+//    List<byte[]> listSK = IEXZMF.keyGen(128, pass, "salt/saltInvIX", 100);
+//    List<byte[]> listSK = IEXZMF.keyGen(128, pass, "salt/saltInvIX", 100);
 /*
     System.out.println("Enter the relative path name of the folder that contains the files to make searchable");
 

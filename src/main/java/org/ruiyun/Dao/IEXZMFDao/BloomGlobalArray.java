@@ -44,6 +44,27 @@ public class BloomGlobalArray {
     }
   }
 
+  public static void UpdateGlobalArrayIndex(String keyword,byte[] listarrayindex) throws Exception {
+    Connection conn = null;
+    PreparedStatement ps = null;
+    try {
+      conn =  IEXZMFDB.getConnection();
+      conn.setAutoCommit(false);
+      ps = conn
+        .prepareStatement("update GlobalArrayIndex set GlobalListArrayIndex=? where GlobalKeyword=?");
+      ps.setBytes(1, listarrayindex);
+      ps.setString(2, keyword);
+      ps.executeUpdate();
+      conn.commit();
+    } catch (Exception es) {
+      conn.rollback();
+      throw es;
+    } finally {
+      conn.setAutoCommit(true);
+      ps.close();
+      conn.close();
+    }
+  }
   /**
    * 根据keyword删除GlobalArrayIndex中的一条记录
    * @param keyword 关键字

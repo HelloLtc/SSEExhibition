@@ -16,7 +16,7 @@ public class IEXZMFDB {
     String name;
     String password;
     try {
-      InputStream is = IEXZMFDB.class.getClassLoader().getResourceAsStream("resources/config.properties");
+      InputStream is = IEXZMFDB.class.getClassLoader().getResourceAsStream("config.properties");
       Properties properties = new Properties();
       properties.load(is);
       driver = properties.getProperty("driver");

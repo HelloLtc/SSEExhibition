@@ -24,7 +24,7 @@ public class TestAddIEX2lev {
 
     String pass = keyRead.readLine();//输入密码
 
-    List<byte[]> listSK = IEX2Lev.keyGen(256, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
+    List<byte[]> listSK = IEX2Lev.keyGen(128, pass, "salt/saltSetM", 100000);//根据输入值生成密钥
 
     long startTime = System.nanoTime();
 

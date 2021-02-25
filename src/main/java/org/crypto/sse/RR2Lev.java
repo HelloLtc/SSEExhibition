@@ -223,7 +223,7 @@ public class RR2Lev implements Serializable {
       threads = Runtime.getRuntime().availableProcessors();
     }
 
-    ExecutorService service = Executors.newFixedThreadPool(2);
+    ExecutorService service = Executors.newFixedThreadPool(threads);
     ArrayList<String[]> inputs = new ArrayList<String[]>(threads);
     //根据处理器的数量，分割关键词
     for (int i = 0; i < threads; i++) {
@@ -257,7 +257,19 @@ public class RR2Lev implements Serializable {
       futures.add(service.submit(callable));
     }
 
-    service.shutdown();
+
+    try {
+      // 告诉线程池，如果所有任务执行完毕则关闭线程池
+      service.shutdown();
+
+      // 判断线程池是否在限定时间内，或者线程池内线程全部结束
+      if(!service.awaitTermination(3, TimeUnit.SECONDS)){
+        // 超时的时候向线程池中所有的线程发出中断(interrupted)。
+        service.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      System.out.println("awaitTermination interrupted: " + e);
+    }
 
     for (Future<Multimap<String, byte[]>> future : futures) {
       Set<String> keys = future.get().keySet();
@@ -314,7 +326,6 @@ public class RR2Lev implements Serializable {
       inputs.add(i, tmp);
     }
 
-    Printer.debugln("End of Partitionning  \n");
     //每个处理器进行处理操作
     List<Future<Multimap<String, byte[]>>> futures = new ArrayList<Future<Multimap<String, byte[]>>>();
     for (final String[] input : inputs) {
@@ -328,7 +339,18 @@ public class RR2Lev implements Serializable {
       futures.add(service.submit(callable));
     }
 
-    service.shutdown();
+    try {
+      // 告诉线程池，如果所有任务执行完毕则关闭线程池
+      service.shutdown();
+
+      // 判断线程池是否在限定时间内，或者线程池内线程全部结束
+      if(!service.awaitTermination(2, TimeUnit.SECONDS)){
+        // 超时的时候向线程池中所有的线程发出中断(interrupted)。
+        service.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      System.out.println("awaitTermination interrupted: " + e);
+    }
 
     for (Future<Multimap<String, byte[]>> future : futures) {
       Set<String> keys = future.get().keySet();
@@ -373,9 +395,6 @@ public class RR2Lev implements Serializable {
       }
 
       counter++;
-      if (((float) counter / 10000) == (int) (counter / 10000)) {
-        Printer.debugln("Number of processed keywords " + counter);
-      }
 
       // generate the tag
       byte[] key1 = CryptoPrimitives.generateCmac(key, 1 + word);
@@ -425,21 +444,6 @@ public class RR2Lev implements Serializable {
 
           }
 
-          // generate the integer which is associated to free[b]
-
-          byte[] randomBytes = CryptoPrimitives
-            .randomBytes((int) Math.ceil(((float) Math.log(free.size()) / (Math.log(2) * 8))));
-
-          int position = CryptoPrimitives.getIntFromByte(randomBytes,
-            (int) Math.ceil(Math.log(free.size()) / Math.log(2)));
-
-          while (position >= free.size() - 1) {
-            position = position / 2;
-          }
-
-          int tmpPos = free.get(position);
-          random.nextBytes(iv);
-          /*---------------------------------------------------------------------------------------------------*/
           int newPos = 0;
           newarray[newPos]=CryptoPrimitives.encryptAES_CTR_String(key2, iv,
             tmpList.toString(), bigBlock * sizeOfFileIdentifer);
@@ -447,12 +451,7 @@ public class RR2Lev implements Serializable {
           GlobalArray.InsertGlobalArrayList(newarray[newPos]);
           newPos = GlobalArray.FindGlobalArrayList(newarray[newPos]);
           newlistArrayIndex.add(newPos + "");
-          /*---------------------------------------------------------------------------------------------------*/
-          array[tmpPos] = CryptoPrimitives.encryptAES_CTR_String(key2, iv,
-            tmpList.toString(), bigBlock * sizeOfFileIdentifer);
-          listArrayIndex.add(tmpPos + "");
 
-          free.remove(position);
 
         }
 
@@ -485,20 +484,7 @@ public class RR2Lev implements Serializable {
               }
             }
 
-            // generate the integer which is associated to free[b]
 
-            byte[] randomBytes = CryptoPrimitives
-              .randomBytes((int) Math.ceil((Math.log(free.size()) / (Math.log(2) * 8))));
-
-            int position = CryptoPrimitives.getIntFromByte(randomBytes,
-              (int) Math.ceil(Math.log(free.size()) / Math.log(2)));
-
-            while (position >= free.size()) {
-              position = position / 2;
-            }
-
-            int tmpPos = free.get(position);
-            random.nextBytes(iv);
 
 
             int newPos = 0;
@@ -509,11 +495,6 @@ public class RR2Lev implements Serializable {
             newPos = GlobalArray.FindGlobalArrayList(newarray[newPos]);
             newlistArrayIndexTwo.add(newPos + "");
 
-            array[tmpPos] = CryptoPrimitives.encryptAES_CTR_String(key2, iv,
-              tmpListTwo.toString(), bigBlock * sizeOfFileIdentifer);
-            listArrayIndexTwo.add(tmpPos + "");
-
-            free.remove(position);
 
           }
 
@@ -529,9 +510,6 @@ public class RR2Lev implements Serializable {
       }
 
     }
-    long endTime = System.nanoTime();
-    long totalTime = endTime - startTime;
-    // Printer.debugln("Time for one (w, id) "+totalTime/lookup.size());
     return gamma;
   }
 
@@ -615,21 +593,7 @@ public class RR2Lev implements Serializable {
 
           }
 
-          // generate the integer which is associated to free[b]
 
-          byte[] randomBytes = CryptoPrimitives
-            .randomBytes((int) Math.ceil(((float) Math.log(free.size()) / (Math.log(2) * 8))));
-
-          int position = CryptoPrimitives.getIntFromByte(randomBytes,
-            (int) Math.ceil(Math.log(free.size()) / Math.log(2)));
-
-          while (position >= free.size() - 1) {
-            position = position / 2;
-          }
-
-          int tmpPos = free.get(position);
-          random.nextBytes(iv);
-          /*---------------------------------------------------------------------------------------------------*/
           int newPos = 0;
           newarray[newPos]=CryptoPrimitives.encryptAES_CTR_String(key2, iv,
             tmpList.toString(), bigBlock * sizeOfFileIdentifer);
@@ -637,12 +601,7 @@ public class RR2Lev implements Serializable {
           LocalArray.InsertLocalArrayList(newarray[newPos]);
           newPos = LocalArray.findLocalListArrayTempList(newarray[newPos]);
           newlistArrayIndex.add(newPos + "");
-          /*---------------------------------------------------------------------------------------------------*/
-          array[tmpPos] = CryptoPrimitives.encryptAES_CTR_String(key2, iv,
-            tmpList.toString(), bigBlock * sizeOfFileIdentifer);
-          listArrayIndex.add(tmpPos + "");
 
-          free.remove(position);
 
         }
 
@@ -675,20 +634,6 @@ public class RR2Lev implements Serializable {
               }
             }
 
-            // generate the integer which is associated to free[b]
-
-            byte[] randomBytes = CryptoPrimitives
-              .randomBytes((int) Math.ceil((Math.log(free.size()) / (Math.log(2) * 8))));
-
-            int position = CryptoPrimitives.getIntFromByte(randomBytes,
-              (int) Math.ceil(Math.log(free.size()) / Math.log(2)));
-
-            while (position >= free.size()) {
-              position = position / 2;
-            }
-
-            int tmpPos = free.get(position);
-            random.nextBytes(iv);
 
 
             int newPos = 0;
@@ -698,11 +643,6 @@ public class RR2Lev implements Serializable {
             LocalArray.InsertLocalArrayList( newarray[newPos]);
             newPos = LocalArray.findLocalListArrayTempList( newarray[newPos]);
             newlistArrayIndexTwo.add(newPos + "");
-            array[tmpPos] = CryptoPrimitives.encryptAES_CTR_String(key2, iv,
-              tmpListTwo.toString(), bigBlock * sizeOfFileIdentifer);
-            listArrayIndexTwo.add(tmpPos + "");
-
-            free.remove(position);
 
           }
 
@@ -894,7 +834,6 @@ public class RR2Lev implements Serializable {
 
       return resultFinal3;
     }
-    //	}
     return new ArrayList<String>();
   }
 
@@ -1049,7 +988,6 @@ public class RR2Lev implements Serializable {
 
       return resultFinal3;
     }
-    //	}
     return new ArrayList<String>();
   }
 }

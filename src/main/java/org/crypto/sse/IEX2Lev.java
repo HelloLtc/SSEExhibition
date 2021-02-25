@@ -58,6 +58,8 @@ public class IEX2Lev implements Serializable {
     this.dictionaryForMM = dictionaryForMM;
   }
 
+
+
   public RR2Lev getGlobalMM() {
     return globalMM;
   }
@@ -90,7 +92,7 @@ public class IEX2Lev implements Serializable {
 
   public static List<byte[]> keyGen(int keySize, String password, String filePathString, int icount)
     throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
-
+    System.out.println("password:"+password);
     List<byte[]> listOfkeys = new ArrayList<byte[]>();
 
     // Generation of two keys for Secure inverted index
@@ -104,6 +106,39 @@ public class IEX2Lev implements Serializable {
 
   }
 
+  public static ArrayList<String> keyGenList(int keySize, String password, String filePathString, int icount)
+    throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, UnsupportedEncodingException {
+
+    ArrayList<String> listOfkeys = new ArrayList<String>();
+    List<byte[]> bytekey = keyGen(keySize, password, filePathString, icount);
+    System.out.println("bytekey:"+bytekey.get(0).length);
+    try {
+      listOfkeys.add(new String( bytekey.get(0), "iso-8859-1" ));
+      listOfkeys.add(new String( bytekey.get(1), "iso-8859-1" ));
+      listOfkeys.add(new String( bytekey.get(2), "iso-8859-1" ));
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+    }
+    System.out.println("listOfkeys:"+listOfkeys.get(0).getBytes("iso-8859-1" ).length);
+    return listOfkeys;
+
+  }
+
+  public static String keyGenString(int keySize, String password, String filePathString, int icount)
+    throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException, UnsupportedEncodingException {
+
+    List<String> listOfkeys = new ArrayList<String>();
+    List<byte[]> bytekey = keyGen(keySize, password, filePathString, icount);
+    listOfkeys.add(new String( bytekey.get(0), "gbk" ));
+    listOfkeys.add(new String( bytekey.get(1), "gbk" ));
+    listOfkeys.add(new String( bytekey.get(2), "gbk" ));
+    List<byte[]> byteskey = new ArrayList<>();
+    byteskey.add(listOfkeys.get(0).getBytes("gbk"));
+    byteskey.add(listOfkeys.get(1).getBytes("gbk"));
+    byteskey.add(listOfkeys.get(2).getBytes("gbk"));
+    return listOfkeys.get(0);
+
+  }
   // ***********************************************************************************************//
 
   ///////////////////// Setup /////////////////////////////
@@ -170,36 +205,12 @@ public class IEX2Lev implements Serializable {
 
     for (String keyword : lookup.keySet()) {
 
-      // Stats for keeping track with the evaluation
-
-      for (int j = 0; j < 100; j++) {//日志记录
-
-        if (counter == (int) ((j + 1) * lookup.keySet().size() / 100)) {
-          BufferedWriter writer2 = new BufferedWriter(new FileWriter("temp-logs.txt", true));
-          writer2.write("\n Number of local multi-maps created" + j + " %");
-          writer2.close();
-
-          break;
-        }
-      }
 
       // Filter setting optional. For a setup without any filtering set
       // filterParameter to 0
       if (((double) lookup.get(keyword).size() / TextExtractPar.maxTupleSize > filterParameter)) {
 
-        // Stats
-        Printer.debugln("Keyword in LMM " + keyword);
-        BufferedWriter writer3 = new BufferedWriter(new FileWriter("words-logs.txt", true));
-        writer3.write("\n Keyword in LMM " + keyword);
-        writer3.close();
 
-        for (int j = 0; j < 10; j++) {
-
-          if (counter == (int) ((j + 1) * lookup.keySet().size() / 10)) {
-            Printer.statsln("Number of total keywords processed equals " + j + "0 % \n");
-            break;
-          }
-        }
 
         // First computing V_w. Determine Doc identifiers
 
@@ -316,4 +327,8 @@ public class IEX2Lev implements Serializable {
     //}
     return finalResult;
   }
+
+
+
+
 }

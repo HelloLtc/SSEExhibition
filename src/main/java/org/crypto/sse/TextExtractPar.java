@@ -41,6 +41,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.pdfbox.cos.COSDocument;
+import org.apache.pdfbox.io.RandomAccessBuffer;
 import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.apache.pdfbox.io.RandomAccessRead;
 import org.apache.pdfbox.pdfparser.PDFParser;
@@ -141,7 +142,19 @@ public class TextExtractPar implements Serializable {
       futures.add(service.submit(callable));
     }
 
-    service.shutdown();
+
+    try {
+      // 告诉线程池，如果所有任务执行完毕则关闭线程池
+      service.shutdown();
+
+      // 判断线程池是否在限定时间内，或者线程池内线程全部结束
+      if(!service.awaitTermination(3, TimeUnit.SECONDS)){
+        // 超时的时候向线程池中所有的线程发出中断(interrupted)。
+        service.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      System.out.println("awaitTermination interrupted: " + e);
+    }
 
     for (Future<TextExtractPar> future : futures) {
       Set<String> keywordSet1 = future.get().getL1().keySet();
@@ -273,7 +286,7 @@ public class TextExtractPar implements Serializable {
             lines.add(extractor.stripFields(rawText));
           }
 
-          extractor.close();
+          extractor.close();fs.close();
         } catch (IOException e) {
           // TODO Auto-generated catch block
           Printer.debugln("File not read: " + file.getName());
@@ -288,8 +301,42 @@ public class TextExtractPar implements Serializable {
       // ***********************************************************************************************//
 
       else if (file.getName().endsWith(".pdf")) {
-
-
+        String result = null;
+        FileInputStream is = null;
+        PDDocument document = null;
+        try {
+          is = new FileInputStream(file.getPath());
+          PDFParser parser = new PDFParser(new RandomAccessBuffer(is));
+          parser.parse();
+          document = parser.getPDDocument();
+          PDFTextStripper stripper = new PDFTextStripper();
+          result = stripper.getText(document);
+        } catch (FileNotFoundException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } catch (IOException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } finally {
+          if (is != null) {
+            try {
+              is.close();
+            } catch (IOException e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+            }
+          }
+          if (document != null) {
+            try {
+              document.close();
+            } catch (IOException e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+            }
+          }
+        }
+        lines.add(result);
+/*
         try {
           PDFParser parser;
           RandomAccessRead randomAccessRead = new RandomAccessBufferedFileInputStream(file);
@@ -298,14 +345,13 @@ public class TextExtractPar implements Serializable {
           COSDocument cd = parser.getDocument();
           PDFTextStripper stripper = new PDFTextStripper();
           lines.add(stripper.getText(new PDDocument(cd)));
-
-          cd.close();
           randomAccessRead.close();
+          cd.close();
         } catch (IOException e) {
           // TODO Auto-generated catch block
           Printer.debugln("File not read: " + file.getName());
         }
-
+*/
       }
 
       // ***********************************************************************************************//
